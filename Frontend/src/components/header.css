@@ -1,0 +1,170 @@
+.header-container {
+    background-color: #AD0000;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1.5rem;
+    max-width: 100%;
+}
+
+.header-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.header-right {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.header-container .p-tabmenu {
+    background: transparent;
+    border: none;
+}
+
+.header-container .p-tabmenu .p-tabmenu-nav {
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.header-container .p-tabmenu .p-tabmenuitem .p-menuitem-link {
+    background: transparent;
+    border: none;
+    color: #FFFFFF;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.header-container .p-tabmenu .p-tabmenuitem .p-menuitem-link:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+}
+
+.header-container .p-tabmenu .p-tabmenuitem.p-highlight .p-menuitem-link {
+    background: rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+    border: none;
+    font-weight: 600;
+}
+
+.header-container .p-tabmenu .p-tabmenuitem .p-menuitem-icon {
+    color: #FFFFFF;
+    margin-right: 0.5rem;
+}
+
+.header-container .p-tabmenu .p-tabmenuitem .p-menuitem-text {
+    color: #FFFFFF;
+}
+
+.header-container .p-tabmenu .p-tabmenuitem .p-menuitem-link:focus {
+    outline: 2px solid #FFFFFF;
+    outline-offset: 2px;
+}
+
+@media (max-width: 1200px) {
+    .header-wrapper {
+        padding: 0.5rem 1rem;
+    }
+
+    .header-container .p-tabmenu .p-tabmenuitem .p-menuitem-link {
+        padding: 0.75rem 0.75rem;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .header-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .header-left,
+    .header-right {
+        width: 100%;
+    }
+
+    .header-right {
+        margin-left: 0;
+    }
+
+    .header-container .p-tabmenu .p-tabmenu-nav {
+        justify-content: center;
+    }
+
+    .header-right .p-tabmenu .p-tabmenu-nav {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-container .p-tabmenu .p-tabmenuitem .p-menuitem-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .header-container .p-tabmenu .p-tabmenuitem .p-menuitem-icon {
+        margin-right: 0.25rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .header-wrapper {
+        padding: 0.5rem;
+    }
+
+    .header-container .p-tabmenu .p-tabmenu-nav {
+        gap: 0.15rem;
+        justify-content: center;
+    }
+
+    .header-container .p-tabmenu .p-tabmenuitem .p-menuitem-link {
+        padding: 0.5rem 0.4rem;
+        font-size: 0.8rem;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .header-container .p-tabmenu .p-tabmenuitem .p-menuitem-icon {
+        margin-right: 0;
+        font-size: 1.1rem;
+    }
+
+    .header-container .p-tabmenu .p-tabmenuitem .p-menuitem-text {
+        font-size: 0.7rem;
+        text-align: center;
+        display: block;
+    }
+}
+
+@media (max-width: 400px) {
+    .header-container .p-tabmenu .p-tabmenuitem .p-menuitem-text {
+        display: none;
+    }
+
+    .header-container .p-tabmenu .p-tabmenuitem .p-menuitem-link {
+        padding: 0.6rem 0.5rem;
+    }
+
+    .header-container .p-tabmenu .p-tabmenuitem .p-menuitem-icon {
+        font-size: 1.3rem;
+        margin: 0;
+    }
+}
+

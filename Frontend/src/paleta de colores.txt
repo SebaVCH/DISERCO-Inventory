@@ -1,0 +1,2 @@
+Rojo (Header): #AD0000
+Blanco (fondo y demas): #FFFFFF
