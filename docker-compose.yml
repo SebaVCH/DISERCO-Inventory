@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      context: ./Backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ./Backend/DISERCO-DB.db:/app/DISERCO-DB.db
+    networks:
+      - diserco-network
+
+  frontend:
+    build:
+      context: ./Frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - diserco-network
+
+networks:
+  diserco-network:
+    driver: bridge
+
+volumes:
+  db-data:

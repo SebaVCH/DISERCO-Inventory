@@ -1,3 +1,4 @@
-from internal.utils.export_report import ExportReport
+#Iniciar Backend
+from cmd.setup.setup import StartBackend
 
-ExportReport()
+app = StartBackend()
