@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "./App";
 import Inventory from "./pages/inventory.tsx";
-import InventoryMovement from "./pages/inventory-movement.tsx";
+import InventoryMovement from "./pages/inventoryMovement.tsx";
 import Report from "./pages/report.tsx";
 import Maintenance from "./pages/maintenance.tsx";
 import Section from "./pages/section.tsx";

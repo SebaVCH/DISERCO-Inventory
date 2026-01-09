@@ -10,3 +10,6 @@ def get_total_inventory():
 def get_critical_inventory():
     return print("Critical inventory")
 
+@router.get("/inventory-movement")
+def get_movement_inventory():
+    return print("Inventory Movements")
