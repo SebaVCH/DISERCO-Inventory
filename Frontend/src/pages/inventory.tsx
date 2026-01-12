@@ -4,30 +4,10 @@ import { classNames } from 'primereact/utils';
 import CrudDataTable from '../components/crudDataTable.tsx';
 import type { CrudDataTableConfig } from '../components/crudDataTable.tsx';
 import type { InventoryItem } from '../types/inventoryItem.ts';
-
-const initialInventoryItems: InventoryItem[] = [
-    {
-        id: 1000,
-        section: "Areas Verdes",
-        name: "Podadora",
-        description: "Codigo 1-2-3-4-5-6",
-        total_entries: 10,
-        total_exits: 5,
-        current_stock: 5,
-        has_critical_stock: false,
-        critical_stock_quantity: 0,
-        comments: "Nueva",
-    },
-    {
-        id: 1001,
-        name: "Tornillo",
-        total_entries: 200,
-        total_exits: 50,
-        current_stock: 50,
-        has_critical_stock: true,
-        critical_stock_quantity: 100,
-    },
-];
+import {useEffect, useState} from "react";
+import { useInventory } from "../hooks/useInventory.ts";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { Message } from "primereact/message";
 
 const emptyInventoryItem: InventoryItem = {
     id: 0,
@@ -39,11 +19,18 @@ const emptyInventoryItem: InventoryItem = {
     critical_stock_quantity: 0,
 };
 
-const hasCriticalStockTemplate = (rowData: InventoryItem) => {
-    return rowData.has_critical_stock ? 'Si' : 'No';
-};
+const hasCriticalStockTemplate = (rowData: InventoryItem) => rowData.has_critical_stock ? 'Si' : 'No';
 
 function Inventory() {
+    const { data, isLoading, isError } = useInventory();
+    const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+
+    useEffect(() => {
+        if (data) {
+            setInventoryItems(data);
+        }
+    }, [data]);
+
     const config: CrudDataTableConfig<InventoryItem> = {
         entityName: 'Item de Inventario',
         entityNamePlural: 'Items de Inventario',
@@ -90,9 +77,17 @@ function Inventory() {
         ),
         getItemDisplayName: (item) => item.name,
         emptyItem: emptyInventoryItem,
-        initialData: initialInventoryItems,
+        initialData: inventoryItems,
         validateItem: (item) => item.name.trim() !== '',
     };
+
+    if (isLoading) {
+        return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
+    }
+
+    if (isError) {
+        return <Message severity="error" text="Error al cargar el inventario" />;
+    }
 
     return <CrudDataTable config={config} />;
 }

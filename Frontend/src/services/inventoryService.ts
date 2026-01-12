@@ -5,7 +5,7 @@ const inventoryPath = '/inventory';
 
 const inventoryAPI = {
     getTotalInventory: async (): Promise<InventoryItem[]> => {
-        const response = await axiosInstance.get(`${inventoryPath}/total-inventory`);
+        const response = await axiosInstance.get(`${inventoryPath}/total-inventory/all`);
         return response.data;
     },
 

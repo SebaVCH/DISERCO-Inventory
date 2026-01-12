@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class InventoryItemBase(BaseModel):
+    id: int
     name: str
     section_id: int | None = None
     description: str | None = None
@@ -8,7 +9,13 @@ class InventoryItemBase(BaseModel):
     critical_stock_quantity: int | None = None
     comments: str | None = None
 
-class InventoryItemCreate(InventoryItemBase):
+class InventoryItemCreate(BaseModel):
+    name: str
+    section_id: int | None = None
+    description: str | None = None
+    has_critical_stock: bool = False
+    critical_stock_quantity: int | None = None
+    comments: str | None = None
     pass
 
 class InventoryItemUpdate(BaseModel):
@@ -20,21 +27,10 @@ class InventoryItemUpdate(BaseModel):
     comments: str | None = None
 
 class InventoryItemRead(InventoryItemBase):
-    id: int
     total_entries: int
     total_exits: int
     current_stock: int
-
-    model_config = {
-        "from_attributes": True
-    }
-
-class InventoryItemSummary(BaseModel):
-    id: int
-    name: str
-    current_stock: int
-    has_critical_stock: bool
-    critical_stock_quantity: int | None = None
+    section_name: str
 
     model_config = {
         "from_attributes": True

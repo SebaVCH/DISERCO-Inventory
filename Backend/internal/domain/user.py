@@ -16,6 +16,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_deleted: Mapped[bool] = mapped_column(nullable=False, default=False)
 
     notification_subscription: Mapped[Optional["NotificationSubscription"]] = relationship(
         back_populates="user",

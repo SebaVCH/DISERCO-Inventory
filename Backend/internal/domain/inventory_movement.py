@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from internal.domain import Base
 if TYPE_CHECKING:
-    from internal.domain.invetory_item import InventoryItem
+    from internal.domain.inventory_item import InventoryItem
     from internal.domain.user import User
 
 class InventoryMovement(Base):

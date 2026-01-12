@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from internal.utils.setup_env import FrontendURL
 
-def setupCORS(app: FastAPI):
+def SetupCORS(app: FastAPI):
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[FrontendURL],

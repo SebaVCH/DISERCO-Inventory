@@ -4,6 +4,9 @@ from internal.api.routes.routes import api_router
 from internal.infrastructure.database.db import StartDB, SessionLocal
 from internal.utils.setup_env import SetupEnv
 
+from internal.api.middleware.cors import SetupCORS
+
+
 def StartBackend() -> FastAPI:
     StartDB()
 
@@ -11,6 +14,7 @@ def StartBackend() -> FastAPI:
     db.close()
 
     app = FastAPI()
+    SetupCORS(app)
 
     app.include_router(api_router)
     SetupEnv()

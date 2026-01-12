@@ -1,5 +1,5 @@
 from typing import Optional, List, TYPE_CHECKING
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, true
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from internal.domain import Base
@@ -22,6 +22,7 @@ class InventoryItem(Base):
     has_critical_stock: Mapped[bool] = mapped_column(nullable=False, default=False)
     critical_stock_quantity: Mapped[Optional[int]] = mapped_column()
     comments: Mapped[Optional[str]] = mapped_column(String(255))
+    is_deleted: Mapped[bool] = mapped_column(nullable=False, default=False)
 
     section: Mapped[Optional["Section"]] = relationship(back_populates="inventory_items")
     movements: Mapped[List["InventoryMovement"]] = relationship(back_populates="inventory_item")

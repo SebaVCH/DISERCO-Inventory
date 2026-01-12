@@ -6,7 +6,7 @@ from internal.domain import Base
 
 if TYPE_CHECKING:
     from internal.domain.report import Report
-    from internal.domain.invetory_item import InventoryItem
+    from internal.domain.inventory_item import InventoryItem
 
 class ReportInventoryItem(Base):
     __tablename__ = "report_inventory_item"

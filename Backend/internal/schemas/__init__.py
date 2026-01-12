@@ -27,8 +27,7 @@ from internal.schemas.invetory_item_schema import (
     InventoryItemBase,
     InventoryItemCreate,
     InventoryItemUpdate,
-    InventoryItemRead,
-    InventoryItemSummary
+    InventoryItemRead
 )
 from internal.schemas.inventory_movement_schema import (
     InventoryMovementBase,

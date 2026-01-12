@@ -2,19 +2,25 @@ from datetime import datetime
 from pydantic import BaseModel
 
 class InventoryMovementBase(BaseModel):
-    inventory_item_id: int
-    user_id: int
+    id: int
     quantity: int
     movement_type: str
     observation: str | None = None
+    inventory_item_id: int
+    user_id: int | None = None
+    created_at: datetime
+
+    model_config = {
+        "from_attributes": True
+    }
 
 class InventoryMovementCreate(BaseModel):
     quantity: int
     observation: str | None = None
 
 class InventoryMovementRead(InventoryMovementBase):
-    id: int
-    created_at: datetime
+    user: str
+    inventory_item: str
 
     model_config = {
         "from_attributes": True
