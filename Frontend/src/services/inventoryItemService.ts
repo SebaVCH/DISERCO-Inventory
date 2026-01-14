@@ -20,7 +20,7 @@ const inventoryItemAPI = {
     },
 
     deleteItem: async (id: number): Promise<InventoryItem[]> => {
-        const response = await axiosInstance.post(`${inventoryItemPath}/${id}`);
+        const response = await axiosInstance.delete(`${inventoryItemPath}/${id}`);
         return response.data;
     },
 

@@ -22,7 +22,8 @@ def append_section_name(inventory: list[Any], result: list[Any]):
             description=item.description,
             has_critical_stock=item.has_critical_stock,
             critical_stock_quantity=item.critical_stock_quantity,
-            comments=item.comments
+            comments=item.comments,
+            is_deleted=item.is_deleted
         ))
 
 @router.get("/total-inventory/{status}", response_model=List[InventoryItemRead])
@@ -37,19 +38,15 @@ def get_total_inventory(status: str,db: Session = Depends(get_db)):
     if status == "hidden":
         inventory = db.query(InventoryItem).filter(InventoryItem.is_deleted == True).options(joinedload(InventoryItem.section)).all()
         append_section_name(inventory, result)
-    return result
-
-@router.get("/critical-inventory", response_model=List[InventoryItemRead])
-def get_critical_inventory(db: Session = Depends(get_db)):
-    critical_inventory = db.query(InventoryItem).options(joinedload(InventoryItem.section)).filter(
-        (InventoryItem.has_critical_stock == True)
-        &
-        (InventoryItem.current_stock <= InventoryItem.critical_stock_quantity + ((InventoryItem.total_exits + InventoryItem.total_entries) * 0.1 ))
-        &
-        (InventoryItem.is_deleted == False)
-    ).all()
-    result = []
-    append_section_name(critical_inventory,result)
+    if status == "critical":
+        critical_inventory = db.query(InventoryItem).options(joinedload(InventoryItem.section)).filter(
+            (InventoryItem.has_critical_stock == True)
+            &
+            (InventoryItem.current_stock <= InventoryItem.critical_stock_quantity + ((InventoryItem.total_exits + InventoryItem.total_entries) * 0.1 ))
+            &
+            (InventoryItem.is_deleted == False)
+        ).all()
+        append_section_name(critical_inventory, result)
     return result
 
 @router.get("/inventory-movement", response_model=List[InventoryMovementRead])
@@ -60,6 +57,7 @@ def get_movement_inventory(db: Session = Depends(get_db)):
         result.append(InventoryMovementRead(
             id = item.id,
             inventory_item= item.inventory_item.name,
+            inventory_item_id= item.inventory_item.id,
             user= item.user.full_name,
             quantity= item.quantity,
             movement_type= item.movement_type,

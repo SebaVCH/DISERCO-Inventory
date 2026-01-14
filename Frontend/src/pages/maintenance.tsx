@@ -15,6 +15,7 @@ const initialProducts: InventoryItem[] = [
         has_critical_stock: false,
         critical_stock_quantity: 0,
         comments: "Nueva",
+        is_deleted: false
     },
     {
         id: 1001,
@@ -24,6 +25,7 @@ const initialProducts: InventoryItem[] = [
         current_stock: 50,
         has_critical_stock: true,
         critical_stock_quantity: 100,
+        is_deleted: false
     },
 ];
 

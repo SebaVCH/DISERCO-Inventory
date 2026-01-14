@@ -1,16 +1,10 @@
 import {useQuery} from "@tanstack/react-query";
 import inventoryAPI from "../services/inventoryService.ts";
-export const useInventory = () => {
-    return useQuery({
-        queryKey: ['inventory', 'total'],
-        queryFn: inventoryAPI.getTotalInventory,
-    });
-};
 
-export const useCriticalInventory = () => {
+export const useInventory = (status: 'all' | 'unhidden' | 'hidden' | 'critical' = 'all') => {
     return useQuery({
-        queryKey: ['inventory', 'critical'],
-        queryFn: inventoryAPI.getCriticalInventory,
+        queryKey: ['inventory', 'total', status],
+        queryFn: () => inventoryAPI.getTotalInventory(status),
     });
 };
 

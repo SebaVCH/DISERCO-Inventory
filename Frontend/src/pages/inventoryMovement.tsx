@@ -5,26 +5,10 @@ import {InputTextarea} from "primereact/inputtextarea";
 import {Dropdown, type DropdownChangeEvent} from "primereact/dropdown";
 import {classNames} from "primereact/utils";
 import type {InventoryMovement} from "../types/inventoryMovement.ts";
-
-const initialInventoryMovement: InventoryMovement[] = [
-    {
-        id: 1,
-        item: "Podadora",
-        user: "Juan",
-        quantity: 1,
-        movement_type: "Entrada",
-        created_at: new Date().toISOString()
-    },
-    {
-        id: 2,
-        item: "Martillo",
-        user: "Pedro",
-        quantity: 5,
-        movement_type: "Salida",
-        observation: "Préstamo temporal",
-        created_at: new Date().toISOString()
-    },
-];
+import {useInventoryMovement} from "../hooks/useInventory.ts";
+import {useEffect, useState} from "react";
+import {ProgressSpinner} from "primereact/progressspinner";
+import {Message} from "primereact/message";
 
 const emptyInventoryMovement: InventoryMovement = {
     id: 0,
@@ -42,16 +26,25 @@ const movementTypes = [
 ];
 
 function InventoryMovementPage() {
+    const { data, isLoading, isError } = useInventoryMovement()
+    const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([]);
+
+    useEffect(() => {
+        if (data) {
+            setInventoryMovements(data);
+        }
+    }, [data]);
+
     const config: CrudDataTableConfig<InventoryMovement> = {
         entityName: 'Movimiento de Inventario',
         entityNamePlural: 'Movimientos de Inventario',
         title: 'Gestión de Movimientos de Inventario',
         columns: [
             { field: 'id', header: 'Código', sortable: true, style: { minWidth: '6rem' } },
-            { field: 'item', header: 'Artículo', sortable: true, style: { minWidth: '12rem' } },
+            { field: 'inventory_item', header: 'Artículo', sortable: true, style: { minWidth: '12rem' } },
             { field: 'user', header: 'Usuario', sortable: true, style: { minWidth: '10rem' } },
-            { field: 'quantity', header: 'Cantidad', sortable: true, style: { minWidth: '8rem' } },
-            { field: 'movement_type', header: 'Tipo de Movimiento', sortable: true, style: { minWidth: '10rem' } },
+            { field: 'quantity', header: 'Cantidad', sortable: true, style: { minWidth: '6rem' } },
+            { field: 'movement_type', header: 'Tipo de Movimiento', sortable: true, style: { minWidth: '6rem' } },
             { field: 'observation', header: 'Observación', sortable: false, style: { minWidth: '12rem' } },
             { field: 'created_at', header: 'Fecha', sortable: true, style: { minWidth: '10rem' } },
         ],
@@ -117,13 +110,20 @@ function InventoryMovementPage() {
         ),
         getItemDisplayName: (movement) => `${movement.item} - ${movement.movement_type}`,
         emptyItem: emptyInventoryMovement,
-        initialData: initialInventoryMovement,
+        initialData: inventoryMovements,
         validateItem: (movement) =>
             movement.item.trim() !== '' &&
             movement.user.trim() !== '' &&
             movement.quantity > 0 &&
             movement.movement_type.trim() !== '',
     };
+    if (isLoading) {
+        return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
+    }
+
+    if (isError) {
+        return <Message severity="error" text="Error al cargar el inventario" />;
+    }
 
     return <CrudDataTable config={config} />;
 }

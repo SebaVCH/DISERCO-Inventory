@@ -31,6 +31,7 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     emptyItem: T;
     initialData: T[];
     validateItem: (item: T) => boolean;
+    onDeleteItem?: (id: number) => Promise<void>;
 }
 
 interface CrudDataTableProps<T extends BaseEntity> {
@@ -48,6 +49,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         emptyItem,
         initialData,
         validateItem,
+        onDeleteItem,
     } = config;
 
     const [items, setItems] = useState<T[]>(initialData);
@@ -58,6 +60,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     const [selectedItems, setSelectedItems] = useState<T[]>([]);
     const [submitted, setSubmitted] = useState<boolean>(false);
     const [globalFilter, setGlobalFilter] = useState<string>('');
+    const [isDeleting, setIsDeleting] = useState(false);
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<T[]>>(null);
 
@@ -101,7 +104,6 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     life: 3000
                 });
             } else {
-                _item.id = createId();
                 _items.push(_item);
                 toast.current?.show({
                     severity: 'success',
@@ -127,17 +129,32 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         setDeleteItemDialog(true);
     };
 
-    const deleteItem = () => {
-        let _items = items.filter((val) => val.id !== item.id);
-        setItems(_items);
-        setDeleteItemDialog(false);
-        setItem(emptyItem);
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Exitoso',
-            detail: `${entityName} Eliminado`,
-            life: 3000
-        });
+    const deleteItem = async () => {
+        try {
+            setIsDeleting(true);
+            if (onDeleteItem) {
+                await onDeleteItem(item.id);
+            }
+            let _items = items.filter((val) => val.id !== item.id);
+            setItems(_items);
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Exitoso',
+                detail: `${entityName} Eliminado`,
+                life: 3000
+            });
+        } catch (error) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo eliminar el registro',
+                life: 3000
+            });
+        } finally {
+            setIsDeleting(false);
+            setDeleteItemDialog(false);
+            setItem(emptyItem);
+        }
     };
 
     const findIndexById = (id: number) => {
@@ -149,19 +166,6 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
             }
         }
         return index;
-    };
-
-    const createId = (): number => {
-        let id = '';
-        const chars = '0123456789';
-        for (let i = 0; i < 5; i++) {
-            id += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return Number(id);
-    };
-
-    const confirmDeleteSelected = () => {
-        setDeleteItemsDialog(true);
     };
 
     const deleteSelectedItems = () => {
@@ -204,13 +208,6 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     severity="success"
                     onClick={openNew}
                 />
-                <Button
-                    label="Eliminar"
-                    icon="pi pi-trash"
-                    severity="danger"
-                    onClick={confirmDeleteSelected}
-                    disabled={!selectedItems || !selectedItems.length}
-                />
             </div>
         );
     };
@@ -223,6 +220,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     rounded
                     outlined
                     className="mr-2"
+                    disabled={isDeleting}
                     onClick={() => editItem(rowData)}
                 />
                 <Button
@@ -230,6 +228,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     rounded
                     outlined
                     severity="danger"
+                    disabled={isDeleting}
                     onClick={() => confirmDeleteItem(rowData)}
                 />
             </React.Fragment>
@@ -262,8 +261,8 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
 
     const deleteItemDialogFooter = (
         <React.Fragment>
-            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteItemDialog} />
-            <Button label="Sí" icon="pi pi-check" severity="danger" onClick={deleteItem} />
+            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteItemDialog} disabled={isDeleting} />
+            <Button label="Sí" icon="pi pi-check" severity="danger" onClick={deleteItem} loading={isDeleting} />
         </React.Fragment>
     );
 
@@ -301,12 +300,12 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     currentPageReportTemplate={`Mostrando {first} a {last} de {totalRecords} ${entityNamePlural.toLowerCase()}`}
                     globalFilter={globalFilter}
                     header={header}
+                    emptyMessage={`No hay ${entityNamePlural.toLowerCase()} registrados`}
                 >
-                    <Column selectionMode="multiple" exportable={false}></Column>
                     {columns.map((col, index) => (
                         <Column key={index} {...col} />
                     ))}
-                    <Column header="Acciones" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }} />
+                    <Column header="Acciones" body={actionBodyTemplate} exportable={false} style={{ minWidth: '8rem' }} />
                 </DataTable>
             </div>
 

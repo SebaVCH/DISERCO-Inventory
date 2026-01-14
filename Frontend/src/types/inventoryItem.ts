@@ -9,4 +9,5 @@ export interface InventoryItem {
     has_critical_stock: boolean
     critical_stock_quantity?: number
     comments?: string
+    is_deleted: boolean
 }

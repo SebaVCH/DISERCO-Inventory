@@ -8,6 +8,7 @@ class InventoryItemBase(BaseModel):
     has_critical_stock: bool = False
     critical_stock_quantity: int | None = None
     comments: str | None = None
+    is_deleted: bool = False
 
 class InventoryItemCreate(BaseModel):
     name: str

@@ -65,7 +65,6 @@ function Notification() {
             const _users = [...users];
             const _user = { ...user };
 
-            _user.id = createId();
             _users.push(_user);
             toast.current?.show({
                 severity: 'success',
@@ -96,15 +95,6 @@ function Notification() {
             detail: 'Usuario eliminado de notificaciones',
             life: 3000
         });
-    };
-
-    const createId = (): number => {
-        let id = '';
-        const chars = '0123456789';
-        for (let i = 0; i < 5; i++) {
-            id += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return Number(id);
     };
 
     const confirmDeleteSelected = () => {
