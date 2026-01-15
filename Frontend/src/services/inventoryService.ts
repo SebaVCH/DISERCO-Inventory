@@ -7,12 +7,12 @@ const inventoryPath = '/inventory';
 const inventoryAPI = {
     getTotalInventory: async (status: 'all' | 'unhidden' | 'hidden' | 'critical' = 'all'): Promise<InventoryItem[]> => {
         const response = await axiosInstance.get(`${inventoryPath}/total-inventory/${status}`);
-        return response.data;
+        return Array.isArray(response.data) ? response.data : [];
     },
 
     getInventoryMovement: async (): Promise<InventoryMovement[]> => {
         const response = await axiosInstance.get(`${inventoryPath}/inventory-movement`);
-        return response.data;
+        return Array.isArray(response.data) ? response.data : [];
     }
 };
 

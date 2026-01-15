@@ -6,7 +6,7 @@ class AppUserBase(BaseModel):
     full_name: str
 
 class AppUserCreate(AppUserBase):
-    password: str
+    password_hash: str
 
 class AppUserLogin(BaseModel):
     email: EmailStr
@@ -23,7 +23,6 @@ class AppUserRead(AppUserBase):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-
 
 class MessageResponse(BaseModel):
     message: str

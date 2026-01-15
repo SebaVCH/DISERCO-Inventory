@@ -1,11 +1,11 @@
 import CrudDataTable, {type CrudDataTableConfig} from "../components/crudDataTable.tsx";
-import {InputText} from "primereact/inputtext";
 import {InputNumber} from "primereact/inputnumber";
 import {InputTextarea} from "primereact/inputtextarea";
 import {Dropdown, type DropdownChangeEvent} from "primereact/dropdown";
 import {classNames} from "primereact/utils";
 import type {InventoryMovement} from "../types/inventoryMovement.ts";
-import {useInventoryMovement} from "../hooks/useInventory.ts";
+import {useInventory, useInventoryMovement} from "../hooks/useInventory.ts";
+import inventoryItemAPI from "../services/inventoryItemService.ts";
 import {useEffect, useState} from "react";
 import {ProgressSpinner} from "primereact/progressspinner";
 import {Message} from "primereact/message";
@@ -20,20 +20,57 @@ const emptyInventoryMovement: InventoryMovement = {
     created_at: "",
 };
 
-const movementTypes = [
-    { label: 'Entrada', value: 'Entrada' },
-    { label: 'Salida', value: 'Salida' },
-];
+const emptyMovementForm = {
+    inventory_item_id: 0,
+    observation: "",
+    entryQuantity: 0,
+    exitQuantity: 0,
+};
 
 function InventoryMovementPage() {
-    const { data, isLoading, isError } = useInventoryMovement()
+    const { data, isLoading, isError, refetch } = useInventoryMovement();
+    const { data: inventoryItems = [] } = useInventory('unhidden');
     const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([]);
+    const [movementForm, setMovementForm] = useState(emptyMovementForm);
 
     useEffect(() => {
         if (data) {
             setInventoryMovements(data);
         }
     }, [data]);
+
+    const handleItemChange = (value: number) => {
+        setMovementForm((prev) => ({ ...prev, inventory_item_id: value }));
+    };
+
+    const handleObservationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setMovementForm((prev) => ({ ...prev, observation: e.target.value }));
+    };
+
+    const handleQuantityChange = (value: number | null, field: 'entryQuantity' | 'exitQuantity') => {
+        setMovementForm((prev) => ({ ...prev, [field]: value ?? 0 }));
+    };
+
+    const saveMovements = async () => {
+        const { inventory_item_id, entryQuantity, exitQuantity, observation } = movementForm;
+        const userId = 1; // TODO: replace with user id from auth token
+
+        if (!inventory_item_id) return;
+
+        const requests: Promise<any>[] = [];
+        if (entryQuantity > 0) {
+            requests.push(inventoryItemAPI.createItemEntry(inventory_item_id, { quantity: entryQuantity, observation }, userId));
+        }
+        if (exitQuantity > 0) {
+            requests.push(inventoryItemAPI.createItemExit(inventory_item_id, { quantity: exitQuantity, observation }, userId));
+        }
+
+        if (requests.length === 0) return;
+
+        await Promise.all(requests);
+        await refetch();
+        setMovementForm(emptyMovementForm);
+    };
 
     const config: CrudDataTableConfig<InventoryMovement> = {
         entityName: 'Movimiento de Inventario',
@@ -48,74 +85,63 @@ function InventoryMovementPage() {
             { field: 'observation', header: 'Observación', sortable: false, style: { minWidth: '12rem' } },
             { field: 'created_at', header: 'Fecha', sortable: true, style: { minWidth: '10rem' } },
         ],
-        dialogContent: (inventory_movement, submitted, onInputChange, onInputTextAreaChange, onInputNumberChange) => (
-            <>
-                <div className="field">
-                    <label htmlFor="item" className="font-bold">Artículo</label>
-                    <InputText
-                        id="item"
-                        value={inventory_movement.item}
-                        onChange={(e) => onInputChange(e, 'item')}
-                        required
-                        autoFocus
-                        className={classNames({ 'p-invalid': submitted && !inventory_movement.item })}
-                    />
-                    {submitted && !inventory_movement.item && <small className="p-error">El artículo es requerido.</small>}
-                </div>
-                <div className="field">
-                    <label htmlFor="user" className="font-bold">Usuario</label>
-                    <InputText
-                        id="user"
-                        value={inventory_movement.user}
-                        onChange={(e) => onInputChange(e, 'user')}
-                        required
-                        className={classNames({ 'p-invalid': submitted && !inventory_movement.user })}
-                    />
-                    {submitted && !inventory_movement.user && <small className="p-error">El usuario es requerido.</small>}
-                </div>
-                <div className="field">
-                    <label htmlFor="quantity" className="font-bold">Cantidad</label>
-                    <InputNumber
-                        id="quantity"
-                        value={inventory_movement.quantity}
-                        onValueChange={(e) => onInputNumberChange(e, 'quantity')}
-                        required
-                        min={1}
-                        className={classNames({ 'p-invalid': submitted && inventory_movement.quantity <= 0 })}
-                    />
-                    {submitted && inventory_movement.quantity <= 0 && <small className="p-error">La cantidad debe ser mayor a 0.</small>}
-                </div>
-                <div className="field">
-                    <label htmlFor="movement_type" className="font-bold">Tipo de Movimiento</label>
-                    <Dropdown
-                        id="movement_type"
-                        value={inventory_movement.movement_type}
-                        options={movementTypes}
-                        onChange={(e: DropdownChangeEvent) => onInputChange(e as unknown as React.ChangeEvent<HTMLInputElement>, 'movement_type')}
-                        placeholder="Seleccione un tipo"
-                        className={classNames({ 'p-invalid': submitted && !inventory_movement.movement_type })}
-                    />
-                    {submitted && !inventory_movement.movement_type && <small className="p-error">El tipo de movimiento es requerido.</small>}
-                </div>
-                <div className="field">
-                    <label htmlFor="observation" className="font-bold">Observación</label>
-                    <InputTextarea
-                        id="observation"
-                        value={inventory_movement.observation || ''}
-                        onChange={(e) => onInputTextAreaChange(e, 'observation')}
-                        rows={3}
-                    />
-                </div>
-            </>
-        ),
+        dialogContent: (_inventory_movement, submitted) => {
+            const quantitiesInvalid = submitted && movementForm.entryQuantity <= 0 && movementForm.exitQuantity <= 0;
+            return (
+                <>
+                    <div className="field">
+                        <label htmlFor="inventory_item_id" className="font-bold">Artículo</label>
+                        <Dropdown
+                            id="inventory_item_id"
+                            value={movementForm.inventory_item_id || null}
+                            options={inventoryItems.map((item) => ({ label: item.name, value: item.id }))}
+                            onChange={(e: DropdownChangeEvent) => handleItemChange(Number(e.value))}
+                            filter
+                            placeholder="Busca y selecciona un artículo"
+                            className={classNames({ 'p-invalid': submitted && !movementForm.inventory_item_id })}
+                        />
+                        {submitted && !movementForm.inventory_item_id && <small className="p-error">El artículo es requerido.</small>}
+                    </div>
+                    <div className="field">
+                        <label htmlFor="entryQuantity" className="font-bold">Cantidad de Entrada</label>
+                        <InputNumber
+                            id="entryQuantity"
+                            value={movementForm.entryQuantity}
+                            onValueChange={(e) => handleQuantityChange(e.value, 'entryQuantity')}
+                            min={0}
+                        />
+                    </div>
+                    <div className="field">
+                        <label htmlFor="exitQuantity" className="font-bold">Cantidad de Salida</label>
+                        <InputNumber
+                            id="exitQuantity"
+                            value={movementForm.exitQuantity}
+                            onValueChange={(e) => handleQuantityChange(e.value, 'exitQuantity')}
+                            min={0}
+                        />
+                    </div>
+                    <div className="field">
+                        <label htmlFor="observation" className="font-bold">Observación</label>
+                        <InputTextarea
+                            id="observation"
+                            value={movementForm.observation}
+                            onChange={handleObservationChange}
+                            rows={3}
+                        />
+                    </div>
+                    {quantitiesInvalid && <Message severity="warn" text="Debes ingresar una cantidad de entrada o salida mayor a 0." />}
+                    <Message severity="info" text="Si entrada y salida son 0 no se enviará ninguna solicitud." />
+                </>
+            );
+        },
         getItemDisplayName: (movement) => `${movement.item} - ${movement.movement_type}`,
         emptyItem: emptyInventoryMovement,
         initialData: inventoryMovements,
-        validateItem: (movement) =>
-            movement.item.trim() !== '' &&
-            movement.user.trim() !== '' &&
-            movement.quantity > 0 &&
-            movement.movement_type.trim() !== '',
+        validateItem: () => movementForm.inventory_item_id > 0 && (movementForm.entryQuantity > 0 || movementForm.exitQuantity > 0),
+        onSaveItem: async () => {
+            await saveMovements();
+            return { ...emptyInventoryMovement } as InventoryMovement;
+        },
     };
     if (isLoading) {
         return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;

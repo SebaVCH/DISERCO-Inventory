@@ -1,4 +1,5 @@
 import type {InventoryItem} from "../types/inventoryItem.ts";
+import type {InventoryMovement} from "../types/inventoryMovement.ts";
 import axiosInstance from "../lib/axios.ts";
 
 const inventoryItemPath = '/inventory-item';
@@ -9,13 +10,13 @@ const inventoryItemAPI = {
         return response.data;
     },
 
-    createItemEntry: async (id: number): Promise<InventoryItem[]> => {
-        const response = await axiosInstance.post(`${inventoryItemPath}/entry/${id}`);
+    createItemEntry: async (id: number, data: { quantity: number; observation?: string }, userId: number = 1): Promise<InventoryMovement> => {
+        const response = await axiosInstance.post(`${inventoryItemPath}/entry/${id}/user/${userId}`, data);
         return response.data;
     },
 
-    createItemExit: async (id: number): Promise<InventoryItem[]> => {
-        const response = await axiosInstance.post(`${inventoryItemPath}/exit/${id}`);
+    createItemExit: async (id: number, data: { quantity: number; observation?: string }, userId: number = 1): Promise<InventoryMovement> => {
+        const response = await axiosInstance.post(`${inventoryItemPath}/exit/${id}/user/${userId}`, data);
         return response.data;
     },
 

@@ -27,7 +27,7 @@ def update_section(section_id: int):
     return {"section_id": section_id}
 
 @router.delete("/{section_id}")
-def delete_section(db: Session = Depends(get_db) , section_id: int):
+def delete_section(section_id: int ,db: Session = Depends(get_db)):
     db.query(Section).filter(Section.id == section_id).update({"is_deleted": True})
     db.commit()
     return {"Sección eliminada"}

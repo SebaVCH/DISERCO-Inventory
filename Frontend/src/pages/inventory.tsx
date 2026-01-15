@@ -37,7 +37,7 @@ function Inventory() {
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
     const criticalStockOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
     const { data: sections = [] } = useSection();
-    const sectionOptions = [{ label: 'Sin sección', value: null }, ...sections.map((section: Section) => ({ label: section.name, value: section.id }))];
+    const sectionOptions = [{ label: 'Sin sección', value: null }, ...(sections?.map?.((section: Section) => ({ label: section.name, value: section.id })) || [])];
 
     useEffect(() => {
         if (data) {

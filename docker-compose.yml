@@ -7,7 +7,7 @@ services:
     environment:
       - PYTHONPATH=/app
     volumes:
-      - ./Backend/DISERCO-DB:/app/DISERCO-DB
+      - ./Backend/DISERCO-DB:/app/DISERCO-DB:Z
     networks:
       - diserco-network
 

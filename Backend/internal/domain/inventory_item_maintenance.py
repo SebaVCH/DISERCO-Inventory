@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from internal.domain import Base
@@ -14,6 +14,7 @@ class InventoryItemMaintenance(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_item.id"), nullable=False)
     maintenance_id: Mapped[int] = mapped_column(ForeignKey("maintenance.id"), nullable=False)
+    inventory_item_maintenance_description: Mapped[str] = mapped_column(String(255), nullable=False)
 
     inventory_item: Mapped["InventoryItem"] = relationship(back_populates="maintenances")
     maintenance: Mapped["Maintenance"] = relationship(back_populates="inventory_item_maintenances")

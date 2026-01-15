@@ -37,7 +37,7 @@ def create_inventory_item_entry(
         inventory_item_id=item_id,
         user_id=user_id,
         quantity=inventory_item_movement_data.quantity,
-        movement_type="entry",
+        movement_type="Entrada",
         observation=inventory_item_movement_data.observation,
         created_at=datetime.now(ZoneInfo("America/Santiago")),
     )
@@ -61,14 +61,14 @@ def create_inventory_item_exit(
         inventory_item_id=item_id,
         user_id=user_id,
         quantity=inventory_item_movement_data.quantity,
-        movement_type="exit",
+        movement_type="Salida",
         observation=inventory_item_movement_data.observation,
         created_at=datetime.now(ZoneInfo("America/Santiago")),
     )
     db.add(new_inventory_item_exit)
     db.query(InventoryItem).filter(InventoryItem.id == item_id).update(
         {"current_stock": InventoryItem.current_stock - inventory_item_movement_data.quantity,
-         "total_exits": InventoryItem.total_exitsd
+         "total_exits": InventoryItem.total_exits
                         + inventory_item_movement_data.quantity}
     )
     db.commit()
