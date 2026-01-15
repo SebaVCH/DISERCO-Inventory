@@ -1,6 +1,7 @@
 export interface InventoryItem {
     id: number
-    section?: string
+    section_id?: number | null
+    section_name?: string
     name: string
     description?: string
     total_entries: number

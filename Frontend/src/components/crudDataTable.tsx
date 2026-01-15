@@ -32,6 +32,7 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     initialData: T[];
     validateItem: (item: T) => boolean;
     onDeleteItem?: (id: number) => Promise<void>;
+    onSaveItem?: (item: T, isNew: boolean) => Promise<T>;
 }
 
 interface CrudDataTableProps<T extends BaseEntity> {
@@ -50,12 +51,12 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         initialData,
         validateItem,
         onDeleteItem,
+        onSaveItem,
     } = config;
 
     const [items, setItems] = useState<T[]>(initialData);
     const [itemDialog, setItemDialog] = useState<boolean>(false);
     const [deleteItemDialog, setDeleteItemDialog] = useState<boolean>(false);
-    const [deleteItemsDialog, setDeleteItemsDialog] = useState<boolean>(false);
     const [item, setItem] = useState<T>(emptyItem);
     const [selectedItems, setSelectedItems] = useState<T[]>([]);
     const [submitted, setSubmitted] = useState<boolean>(false);
@@ -83,39 +84,42 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         setDeleteItemDialog(false);
     };
 
-    const hideDeleteItemsDialog = () => {
-        setDeleteItemsDialog(false);
-    };
-
-    const saveItem = () => {
+    const saveItem = async () => {
         setSubmitted(true);
 
         if (validateItem(item)) {
-            let _items = [...items];
-            let _item = { ...item };
+            try {
+                const isNew = !item.id;
+                const savedItem = onSaveItem ? await onSaveItem(item, isNew) : item;
+                let _items = [...items];
+                let _item = { ...savedItem };
 
-            if (item.id) {
-                const index = findIndexById(item.id);
-                _items[index] = _item;
+                if (!isNew) {
+                    const index = findIndexById(item.id);
+                    if (index !== -1) {
+                        _items[index] = _item;
+                    }
+                } else {
+                    _items.push(_item);
+                }
+
+                setItems(_items);
                 toast.current?.show({
                     severity: 'success',
                     summary: 'Exitoso',
-                    detail: `${entityName} Actualizado`,
+                    detail: `${entityName} ${isNew ? 'Creado' : 'Actualizado'}`,
                     life: 3000
                 });
-            } else {
-                _items.push(_item);
+                setItemDialog(false);
+                setItem(emptyItem);
+            } catch (error) {
                 toast.current?.show({
-                    severity: 'success',
-                    summary: 'Exitoso',
-                    detail: `${entityName} Creado`,
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: `No se pudo ${!item.id ? 'crear' : 'actualizar'} el registro`,
                     life: 3000
                 });
             }
-
-            setItems(_items);
-            setItemDialog(false);
-            setItem(emptyItem);
         }
     };
 
@@ -168,27 +172,14 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         return index;
     };
 
-    const deleteSelectedItems = () => {
-        let _items = items.filter((val) => !selectedItems.includes(val));
-        setItems(_items);
-        setDeleteItemsDialog(false);
-        setSelectedItems([]);
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Exitoso',
-            detail: `${entityNamePlural} Eliminados`,
-            life: 3000
-        });
-    };
-
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement>, name: string) => {
-        const val = (e.target && e.target.value) || '';
+        const val = e.target?.value ?? '';
         const _item = { ...item, [name]: val } as T;
         setItem(_item);
     };
 
     const onInputTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>, name: string) => {
-        const val = (e.target && e.target.value) || '';
+        const val = e.target?.value ?? '';
         const _item = { ...item, [name]: val } as T;
         setItem(_item);
     };
@@ -266,13 +257,6 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         </React.Fragment>
     );
 
-    const deleteItemsDialogFooter = (
-        <React.Fragment>
-            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteItemsDialog} />
-            <Button label="Sí" icon="pi pi-check" severity="danger" onClick={deleteSelectedItems} />
-        </React.Fragment>
-    );
-
     return (
         <div>
             <Toast ref={toast} />
@@ -338,21 +322,6 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                             ¿Está seguro de que desea eliminar <b>{getItemDisplayName(item)}</b>?
                         </span>
                     )}
-                </div>
-            </Dialog>
-
-            <Dialog
-                visible={deleteItemsDialog}
-                style={{ width: '32rem' }}
-                breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-                header="Confirmar"
-                modal
-                footer={deleteItemsDialogFooter}
-                onHide={hideDeleteItemsDialog}
-            >
-                <div className="confirmation-content">
-                    <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                    {item && <span>¿Está seguro de que desea eliminar los {entityNamePlural.toLowerCase()} seleccionados?</span>}
                 </div>
             </Dialog>
         </div>

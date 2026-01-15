@@ -12,6 +12,9 @@ import {useInventory} from "../hooks/useInventory.ts";
 import {SelectButton} from "primereact/selectbutton";
 import {InputNumber} from "primereact/inputnumber";
 import inventoryItemAPI from "../services/inventoryItemService.ts";
+import {Dropdown, type DropdownChangeEvent} from "primereact/dropdown";
+import {useSection} from "../hooks/useSection.ts";
+import type { Section } from "../types/section";
 
 const emptyInventoryItem: InventoryItem = {
     id: 0,
@@ -22,6 +25,7 @@ const emptyInventoryItem: InventoryItem = {
     has_critical_stock: false,
     critical_stock_quantity: 0,
     is_deleted: false,
+    section_id: null,
 };
 
 const hasCriticalStockTemplate = (rowData: InventoryItem) => rowData.has_critical_stock ? 'Si' : 'No';
@@ -31,9 +35,9 @@ function Inventory() {
     const [statusFilter, setStatusFilter] = useState<'all' | 'unhidden' | 'hidden' | 'critical'>('all');
     const { data, isLoading, isError } = useInventory(statusFilter);
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-    const options = ['off', 'on'];
-    const [value, setValue] = useState(options[0]);
-    const [defaultValueNumber, setdefaultValueNumber] = useState(100);
+    const criticalStockOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
+    const { data: sections = [] } = useSection();
+    const sectionOptions = [{ label: 'Sin sección', value: null }, ...sections.map((section: Section) => ({ label: section.name, value: section.id }))];
 
     useEffect(() => {
         if (data) {
@@ -58,7 +62,7 @@ function Inventory() {
             { field: 'comments', header: 'Comentarios', sortable: true, style: { minWidth: '8rem' } },
             { field: 'is_deleted', header: '¿Esta eliminado?', body: isDeletedTemplate, sortable: true, style: { minWidth: '6rem' } },
         ],
-        dialogContent: (item, submitted, onInputChange, onInputTextAreaChange) => (
+        dialogContent: (item, submitted, onInputChange, onInputTextAreaChange, onInputNumberChange) => (
             <>
                 <div className="field">
                     <label htmlFor="name" className="font-bold">Nombre</label>
@@ -72,27 +76,34 @@ function Inventory() {
                     />
                     {submitted && !item.name && <small className="p-error">El nombre es requerido.</small>}
                 </div>
-
                 <div className="field">
-                    <label htmlFor="name" className="font-bold">Descripción</label>
+                    <label htmlFor="description" className="font-bold">Descripción</label>
                     <InputText
                         id="description"
                         value={item.description}
                         onChange={(e) => onInputChange(e, 'description')}
-                        required
-                        autoFocus
-                        className={classNames({ 'p-invalid': submitted && !item.name })}
                     />
                 </div>
 
                 <div className="field">
                     <label htmlFor="has_critical_stock" className="font-bold">¿Tiene stock critico?</label>
-                    <SelectButton value={value} onChange={(e) => setValue(e.value)} options={options} />
+                    <SelectButton
+                        value={item.has_critical_stock}
+                        onChange={(e) => onInputChange({ target: { value: e.value } } as unknown as React.ChangeEvent<HTMLInputElement>, 'has_critical_stock')}
+                        options={criticalStockOptions}
+                    />
                 </div>
 
                 <div className="field">
                     <label htmlFor="critical_stock_quantity" className="font-bold">Cantidad de stock critico</label>
-                    <InputNumber variant="filled" value={defaultValueNumber} onValueChange={(e) => setdefaultValueNumber(e.value)} mode="decimal" minFractionDigits={2} />
+                    <InputNumber
+                        id="critical_stock_quantity"
+                        variant="filled"
+                        value={item.critical_stock_quantity ?? 0}
+                        onValueChange={(e) => onInputNumberChange(e, 'critical_stock_quantity')}
+                        mode="decimal"
+                        minFractionDigits={0}
+                    />
                 </div>
 
                 <div className="field">
@@ -101,9 +112,20 @@ function Inventory() {
                         id="comments"
                         value={item.comments}
                         onChange={(e) => onInputTextAreaChange(e, 'comments')}
-                        required
                         rows={3}
                         cols={20}
+                    />
+                </div>
+                <div className="field">
+                    <label htmlFor="section_id" className="font-bold">Sección</label>
+                    <Dropdown
+                        id="section_id"
+                        value={item.section_id ?? null}
+                        options={sectionOptions}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Seleccione una sección (opcional)"
+                        onChange={(e: DropdownChangeEvent) => onInputChange({ target: { value: e.value } } as unknown as React.ChangeEvent<HTMLInputElement>, 'section_id')}
                     />
                 </div>
             </>
@@ -115,6 +137,27 @@ function Inventory() {
         onDeleteItem: async (id: number) => {
             await inventoryItemAPI.deleteItem(id);
             setInventoryItems((prev) => prev.filter((it) => it.id !== id));
+        },
+        onSaveItem: async (item, isNew) => {
+            const payload = {
+                name: item.name,
+                description: item.description,
+                has_critical_stock: item.has_critical_stock,
+                critical_stock_quantity: item.critical_stock_quantity,
+                comments: item.comments,
+                section_id: item.section_id ?? null,
+            };
+
+            if (isNew) {
+                const created = await inventoryItemAPI.createItem(payload);
+                setInventoryItems((prev) => [...prev, created]);
+                return created;
+            }
+
+            await inventoryItemAPI.updateItem(item.id, payload);
+            const updated = { ...item };
+            setInventoryItems((prev) => prev.map((it) => (it.id === item.id ? updated : it)));
+            return updated;
         },
     };
 

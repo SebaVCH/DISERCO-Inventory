@@ -3,17 +3,10 @@ import { classNames } from 'primereact/utils';
 import CrudDataTable from '../components/crudDataTable.tsx';
 import type { CrudDataTableConfig } from '../components/crudDataTable.tsx';
 import type { Section } from '../types/section';
-
-const initialSections: Section[] = [
-    {
-        id: 1,
-        name: "Areas Verdes",
-    },
-    {
-        id: 2,
-        name: "Alumbrado",
-    }
-];
+import {useSection} from "../hooks/useSection.ts";
+import {useEffect, useState} from "react";
+import {ProgressSpinner} from "primereact/progressspinner";
+import {Message} from "primereact/message";
 
 const emptySection: Section = {
     id: 0,
@@ -21,6 +14,15 @@ const emptySection: Section = {
 };
 
 function SectionPage() {
+    const { data, isLoading, isError } = useSection()
+    const [sections, setSection] = useState<Section[]>([]);
+
+    useEffect(() => {
+        if (data) {
+            setSection(data);
+        }
+    }, [data]);
+
     const config: CrudDataTableConfig<Section> = {
         entityName: 'Sección',
         entityNamePlural: 'Secciones',
@@ -45,9 +47,17 @@ function SectionPage() {
         ),
         getItemDisplayName: (section) => section.name,
         emptyItem: emptySection,
-        initialData: initialSections,
+        initialData: sections,
         validateItem: (section) => section.name.trim() !== '',
     };
+
+    if (isLoading) {
+        return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
+    }
+
+    if (isError) {
+        return <Message severity="error" text="Error al cargar el inventario" />;
+    }
 
     return <CrudDataTable config={config} />;
 }

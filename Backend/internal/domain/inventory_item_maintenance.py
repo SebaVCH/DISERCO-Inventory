@@ -17,4 +17,3 @@ class InventoryItemMaintenance(Base):
 
     inventory_item: Mapped["InventoryItem"] = relationship(back_populates="maintenances")
     maintenance: Mapped["Maintenance"] = relationship(back_populates="inventory_item_maintenances")
-

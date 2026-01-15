@@ -1,5 +1,6 @@
 import axiosInstance from "../lib/axios.ts";
 import type {InventoryItem} from "../types/inventoryItem.ts";
+import type {InventoryMovement} from "../types/inventoryMovement.ts";
 
 const inventoryPath = '/inventory';
 
@@ -9,7 +10,7 @@ const inventoryAPI = {
         return response.data;
     },
 
-    getInventoryMovement: async (): Promise<InventoryItem[]> => {
+    getInventoryMovement: async (): Promise<InventoryMovement[]> => {
         const response = await axiosInstance.get(`${inventoryPath}/inventory-movement`);
         return response.data;
     }

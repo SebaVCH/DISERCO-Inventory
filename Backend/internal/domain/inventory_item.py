@@ -27,5 +27,3 @@ class InventoryItem(Base):
     section: Mapped[Optional["Section"]] = relationship(back_populates="inventory_items")
     movements: Mapped[List["InventoryMovement"]] = relationship(back_populates="inventory_item")
     maintenances: Mapped[List["InventoryItemMaintenance"]] = relationship(back_populates="inventory_item")
-
-

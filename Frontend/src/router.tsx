@@ -52,5 +52,3 @@ export const router = createBrowserRouter([
         element: <Auth />,
     },
 ]);
-
-

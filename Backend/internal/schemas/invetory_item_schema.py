@@ -11,6 +11,7 @@ class InventoryItemBase(BaseModel):
     is_deleted: bool = False
 
 class InventoryItemCreate(BaseModel):
+    id: int | None = None
     name: str
     section_id: int | None = None
     description: str | None = None

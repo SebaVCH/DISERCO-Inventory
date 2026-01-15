@@ -20,4 +20,3 @@ class SectionInventoryItem(Base):
 
     section: Mapped["Section"] = relationship()
     inventory_item: Mapped["InventoryItem"] = relationship()
-

@@ -1,32 +1,31 @@
-import type {User} from "../types/user.ts";
+import type {Section} from "../types/section";
 import axiosInstance from "../lib/axios.ts";
 
-const sectionPath = '/sections';
+const sectionPath = '/section';
 
 const sectionAPI = {
-    createSection: async (): Promise<User[]> => {
+    createSection: async (): Promise<Section> => {
         const response = await axiosInstance.post(`${sectionPath}/`);
         return response.data;
     },
 
-    getSections: async (): Promise<User[]> => {
+    getSections: async (): Promise<Section[]> => {
         const response = await axiosInstance.get(`${sectionPath}/`);
         return response.data;
     },
 
-    getSectionByID: async (): Promise<User[]> => {
-        const response = await axiosInstance.get(`${sectionPath}/`);
+    getSectionByID: async (id: number): Promise<Section> => {
+        const response = await axiosInstance.get(`${sectionPath}/${id}`);
         return response.data;
     },
 
-    updateSection: async (id: number): Promise<User[]> => {
+    updateSection: async (id: number): Promise<Section> => {
         const response = await axiosInstance.put(`${sectionPath}/${id}`);
         return response.data;
     },
 
-    deleteSection: async (id: number): Promise<User[]> => {
-        const response = await axiosInstance.delete(`${sectionPath}/${id}`);
-        return response.data;
+    deleteSection: async (id: number): Promise<void> => {
+        await axiosInstance.delete(`${sectionPath}/${id}`);
     }
 }
 

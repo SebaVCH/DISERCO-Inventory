@@ -6,7 +6,7 @@ import type {InventoryItem} from "../types/inventoryItem.ts";
 const initialProducts: InventoryItem[] = [
     {
         id: 1000,
-        section: "Areas Verdes",
+        section_name: "Areas Verdes",
         name: "Podadora",
         description: "Codigo 1-2-3-4-5-6",
         total_entries: 10,
@@ -45,7 +45,7 @@ function Maintenance() {
                     <span className="font-bold">{item.name}</span>
                     <div className="flex align-items-center gap-2">
                         <i className="pi pi-tag text-sm"></i>
-                        <span>{item.section || 'Sin sección'}</span>
+                        <span>{item.section_name || 'Sin sección'}</span>
                     </div>
                     {item.description && (
                         <div className="text-sm text-600">

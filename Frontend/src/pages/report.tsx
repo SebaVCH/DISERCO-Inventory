@@ -8,7 +8,7 @@ import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
 import type { Report } from "../types/report.ts";
 
-function Report() {
+function ReportPage() {
     const [reports] = useState<Report[]>([
         {
             id: 1,
@@ -126,4 +126,4 @@ function Report() {
     );
 }
 
-export default Report;
+export default ReportPage;
