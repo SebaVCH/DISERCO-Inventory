@@ -1,6 +1,6 @@
 export interface InventoryMovement {
     id: number
-    item: string
+    inventory_item: string
     user: string
     quantity: number
     movement_type: string

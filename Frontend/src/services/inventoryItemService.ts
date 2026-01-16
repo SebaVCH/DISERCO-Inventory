@@ -25,6 +25,10 @@ const inventoryItemAPI = {
         return response.data;
     },
 
+    deleteMovement: async (movementId: number): Promise<void> => {
+        await axiosInstance.delete(`${inventoryItemPath}/movement/${movementId}`);
+    },
+
     updateItem: async (id: number, data: Partial<Omit<InventoryItem, 'id' | 'total_entries' | 'total_exits' | 'current_stock' | 'is_deleted' | 'section_name'>>): Promise<any> => {
         const response = await axiosInstance.put(`${inventoryItemPath}/${id}`, data);
         return response.data;

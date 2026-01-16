@@ -33,6 +33,7 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     validateItem: (item: T) => boolean;
     onDeleteItem?: (id: number) => Promise<void>;
     onSaveItem?: (item: T, isNew: boolean) => Promise<T>;
+    enableEditAction?: boolean;
 }
 
 interface CrudDataTableProps<T extends BaseEntity> {
@@ -52,6 +53,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         validateItem,
         onDeleteItem,
         onSaveItem,
+        enableEditAction = true,
     } = config;
 
     const [items, setItems] = useState<T[]>(initialData);
@@ -206,14 +208,16 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     const actionBodyTemplate = (rowData: T) => {
         return (
             <React.Fragment>
-                <Button
-                    icon="pi pi-pencil"
-                    rounded
-                    outlined
-                    className="mr-2"
-                    disabled={isDeleting}
-                    onClick={() => editItem(rowData)}
-                />
+                {enableEditAction && (
+                    <Button
+                        icon="pi pi-pencil"
+                        rounded
+                        outlined
+                        className="mr-2"
+                        disabled={isDeleting}
+                        onClick={() => editItem(rowData)}
+                    />
+                )}
                 <Button
                     icon="pi pi-trash"
                     rounded

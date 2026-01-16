@@ -15,7 +15,7 @@ def create_section():
 
 @router.get("/", response_model=List[SectionRead])
 def get_sections(db: Session = Depends(get_db)):
-    sections = db.query(Section).all()
+    sections = db.query(Section).filter(Section.is_deleted == False).all()
     return sections
 
 @router.get("/{section_id}")

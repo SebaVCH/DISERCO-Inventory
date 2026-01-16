@@ -1,6 +1,6 @@
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -33,21 +33,26 @@ def create_inventory_item_entry(
     user_id: int,
     db: Session = Depends(get_db),
 ):
-    new_inventory_item_entry = InventoryMovement(
-        inventory_item_id=item_id,
-        user_id=user_id,
-        quantity=inventory_item_movement_data.quantity,
-        movement_type="Entrada",
-        observation=inventory_item_movement_data.observation,
-        created_at=datetime.now(ZoneInfo("America/Santiago")),
-    )
-    db.add(new_inventory_item_entry)
-    db.query(InventoryItem).filter(InventoryItem.id == item_id).update(
-        {"current_stock": InventoryItem.current_stock + inventory_item_movement_data.quantity,
-         "total_entries": InventoryItem.total_entries + inventory_item_movement_data.quantity}
-    )
-    db.commit()
-    db.refresh(new_inventory_item_entry)
+    try:
+        new_inventory_item_entry = InventoryMovement(
+            inventory_item_id=item_id,
+            user_id=user_id,
+            quantity=inventory_item_movement_data.quantity,
+            movement_type="Entrada",
+            observation=inventory_item_movement_data.observation,
+            created_at=datetime.now(ZoneInfo("America/Santiago")),
+        )
+        db.add(new_inventory_item_entry)
+        db.query(InventoryItem).filter(InventoryItem.id == item_id).update(
+            {"current_stock": InventoryItem.current_stock + inventory_item_movement_data.quantity,
+             "total_entries": InventoryItem.total_entries + inventory_item_movement_data.quantity}
+        )
+        db.commit()
+        db.refresh(new_inventory_item_entry)
+    except Exception as e:
+        db.rollback()
+        raise e
+
     return new_inventory_item_entry
 
 @router.post("/exit/{item_id}/user/{user_id}")
@@ -57,22 +62,26 @@ def create_inventory_item_exit(
     user_id: int,
     db: Session = Depends(get_db),
 ):
-    new_inventory_item_exit = InventoryMovement(
-        inventory_item_id=item_id,
-        user_id=user_id,
-        quantity=inventory_item_movement_data.quantity,
-        movement_type="Salida",
-        observation=inventory_item_movement_data.observation,
-        created_at=datetime.now(ZoneInfo("America/Santiago")),
-    )
-    db.add(new_inventory_item_exit)
-    db.query(InventoryItem).filter(InventoryItem.id == item_id).update(
-        {"current_stock": InventoryItem.current_stock - inventory_item_movement_data.quantity,
-         "total_exits": InventoryItem.total_exits
-                        + inventory_item_movement_data.quantity}
-    )
-    db.commit()
-    db.refresh(new_inventory_item_exit)
+    try:
+        new_inventory_item_exit = InventoryMovement(
+            inventory_item_id=item_id,
+            user_id=user_id,
+            quantity=inventory_item_movement_data.quantity,
+            movement_type="Salida",
+            observation=inventory_item_movement_data.observation,
+            created_at=datetime.now(ZoneInfo("America/Santiago")),
+        )
+        db.add(new_inventory_item_exit)
+        db.query(InventoryItem).filter(InventoryItem.id == item_id).update(
+            {"current_stock": InventoryItem.current_stock - inventory_item_movement_data.quantity,
+             "total_exits": InventoryItem.total_exits + inventory_item_movement_data.quantity}
+        )
+        db.commit()
+        db.refresh(new_inventory_item_exit)
+    except Exception as e:
+        db.rollback()
+        raise e
+
     return new_inventory_item_exit
 
 @router.delete("/{inventory_item_id}")
@@ -86,3 +95,24 @@ def update_inventory_item(inventory_item_id: int,data: dict ,db: Session = Depen
     db.execute(update(InventoryItem).filter_by(id=inventory_item_id).values(**data))
     db.commit()
     return {"Elemento actualizado"}
+
+@router.delete("/movement/{movement_id}")
+def delete_movement(movement_id: int, db: Session = Depends(get_db)):
+    movement = db.query(InventoryMovement).filter(InventoryMovement.id == movement_id).first()
+    if not movement:
+        raise HTTPException(status_code=404, detail="Movimiento no encontrado")
+    try:
+        if movement.movement_type == "Entrada":
+            db.query(InventoryItem).filter(InventoryItem.id == movement.inventory_item_id).update(
+                {"current_stock": InventoryItem.current_stock - movement.quantity,
+                    "total_entries": InventoryItem.total_entries - movement.quantity,})
+        elif movement.movement_type == "Salida":
+            db.query(InventoryItem).filter(InventoryItem.id == movement.inventory_item_id).update(
+                {"current_stock": InventoryItem.current_stock + movement.quantity,
+                    "total_exits": InventoryItem.total_exits + movement.quantity,})
+        db.query(InventoryMovement).filter(InventoryMovement.id == movement_id).delete()
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e
+    return {"Movimiento eliminado"}

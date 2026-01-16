@@ -2,6 +2,8 @@ import CrudDataTable, {type CrudDataTableConfig} from "../components/crudDataTab
 import {InputNumber} from "primereact/inputnumber";
 import {InputTextarea} from "primereact/inputtextarea";
 import {Dropdown, type DropdownChangeEvent} from "primereact/dropdown";
+import {InputText} from "primereact/inputtext";
+import {Button} from "primereact/button";
 import {classNames} from "primereact/utils";
 import type {InventoryMovement} from "../types/inventoryMovement.ts";
 import {useInventory, useInventoryMovement} from "../hooks/useInventory.ts";
@@ -20,18 +22,40 @@ const emptyInventoryMovement: InventoryMovement = {
     created_at: "",
 };
 
-const emptyMovementForm = {
+interface MovementRow {
+    key: string;
+    inventory_item_id: number;
+    observation: string;
+    entryQuantity: number;
+    exitQuantity: number;
+}
+
+const createEmptyRow = (): MovementRow => ({
+    key: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     inventory_item_id: 0,
     observation: "",
     entryQuantity: 0,
     exitQuantity: 0,
+});
+
+const dateBodyTemplate = (rowData) => {
+    const date = new Date(rowData.created_at);
+    return date.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 };
 
 function InventoryMovementPage() {
     const { data, isLoading, isError, refetch } = useInventoryMovement();
     const { data: inventoryItems = [] } = useInventory('unhidden');
     const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([]);
-    const [movementForm, setMovementForm] = useState(emptyMovementForm);
+    const [movementRows, setMovementRows] = useState<MovementRow[]>([createEmptyRow()]);
+    const [itemSearch, setItemSearch] = useState("");
 
     useEffect(() => {
         if (data) {
@@ -39,37 +63,81 @@ function InventoryMovementPage() {
         }
     }, [data]);
 
-    const handleItemChange = (value: number) => {
-        setMovementForm((prev) => ({ ...prev, inventory_item_id: value }));
+    const filteredInventoryItems = inventoryItems.filter((item) =>
+        item.name.toLowerCase().includes(itemSearch.toLowerCase())
+    );
+
+    const ensureTrailingEmptyRow = (rows: MovementRow[]) => {
+        const last = rows[rows.length - 1];
+        const hasData = Boolean(last.inventory_item_id || last.entryQuantity > 0 || last.exitQuantity > 0 || last.observation.trim());
+        return hasData ? [...rows, createEmptyRow()] : rows;
     };
 
-    const handleObservationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setMovementForm((prev) => ({ ...prev, observation: e.target.value }));
+    const updateRow = (rowKey: string, updater: (row: MovementRow) => MovementRow) => {
+        setMovementRows((prev) => {
+            const updated = prev.map((row) => (row.key === rowKey ? updater(row) : row));
+            return ensureTrailingEmptyRow(updated);
+        });
     };
 
-    const handleQuantityChange = (value: number | null, field: 'entryQuantity' | 'exitQuantity') => {
-        setMovementForm((prev) => ({ ...prev, [field]: value ?? 0 }));
+    const removeRow = (rowKey: string) => {
+        setMovementRows((prev) => {
+            const remaining = prev.filter((row) => row.key !== rowKey);
+            if (remaining.length === 0) {
+                return [createEmptyRow()];
+            }
+            return ensureTrailingEmptyRow(remaining);
+        });
     };
+
+    const handleItemChange = (rowKey: string, value: number) => {
+        updateRow(rowKey, (row) => ({ ...row, inventory_item_id: value }));
+    };
+
+    const handleObservationChange = (rowKey: string, e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const text = e.target.value;
+        updateRow(rowKey, (row) => ({ ...row, observation: text }));
+    };
+
+    const handleQuantityChange = (rowKey: string, value: number | null, field: 'entryQuantity' | 'exitQuantity') => {
+        updateRow(rowKey, (row) => ({ ...row, [field]: value ?? 0 }));
+    };
+
+    const hasValidMovements = () => movementRows.some((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
 
     const saveMovements = async () => {
-        const { inventory_item_id, entryQuantity, exitQuantity, observation } = movementForm;
         const userId = 1; // TODO: replace with user id from auth token
-
-        if (!inventory_item_id) return;
-
+        const actionableRows = movementRows.filter((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
         const requests: Promise<any>[] = [];
-        if (entryQuantity > 0) {
-            requests.push(inventoryItemAPI.createItemEntry(inventory_item_id, { quantity: entryQuantity, observation }, userId));
-        }
-        if (exitQuantity > 0) {
-            requests.push(inventoryItemAPI.createItemExit(inventory_item_id, { quantity: exitQuantity, observation }, userId));
-        }
+
+        actionableRows.forEach((row) => {
+            const payload = { observation: row.observation } as { quantity: number; observation?: string };
+            if (row.entryQuantity > 0) {
+                requests.push(
+                    inventoryItemAPI.createItemEntry(
+                        row.inventory_item_id,
+                        { ...payload, quantity: row.entryQuantity },
+                        userId
+                    )
+                );
+            }
+            if (row.exitQuantity > 0) {
+                requests.push(
+                    inventoryItemAPI.createItemExit(
+                        row.inventory_item_id,
+                        { ...payload, quantity: row.exitQuantity },
+                        userId
+                    )
+                );
+            }
+        });
 
         if (requests.length === 0) return;
 
         await Promise.all(requests);
         await refetch();
-        setMovementForm(emptyMovementForm);
+        setMovementRows([createEmptyRow()]);
+        setItemSearch("");
     };
 
     const config: CrudDataTableConfig<InventoryMovement> = {
@@ -83,65 +151,91 @@ function InventoryMovementPage() {
             { field: 'quantity', header: 'Cantidad', sortable: true, style: { minWidth: '6rem' } },
             { field: 'movement_type', header: 'Tipo de Movimiento', sortable: true, style: { minWidth: '6rem' } },
             { field: 'observation', header: 'Observación', sortable: false, style: { minWidth: '12rem' } },
-            { field: 'created_at', header: 'Fecha', sortable: true, style: { minWidth: '10rem' } },
+            { field: 'created_at', header: 'Fecha', body:  dateBodyTemplate,sortable: true, style: { minWidth: '10rem' } },
         ],
         dialogContent: (_inventory_movement, submitted) => {
-            const quantitiesInvalid = submitted && movementForm.entryQuantity <= 0 && movementForm.exitQuantity <= 0;
+            const rowsMissingItem = (row: MovementRow) => submitted && (row.entryQuantity > 0 || row.exitQuantity > 0) && !row.inventory_item_id;
+            const showNoQuantityWarning = submitted && !hasValidMovements();
             return (
                 <>
-                    <div className="field">
-                        <label htmlFor="inventory_item_id" className="font-bold">Artículo</label>
-                        <Dropdown
-                            id="inventory_item_id"
-                            value={movementForm.inventory_item_id || null}
-                            options={inventoryItems.map((item) => ({ label: item.name, value: item.id }))}
-                            onChange={(e: DropdownChangeEvent) => handleItemChange(Number(e.value))}
-                            filter
-                            placeholder="Busca y selecciona un artículo"
-                            className={classNames({ 'p-invalid': submitted && !movementForm.inventory_item_id })}
-                        />
-                        {submitted && !movementForm.inventory_item_id && <small className="p-error">El artículo es requerido.</small>}
+                    <div className="grid">
+                        {movementRows.map((row, index) => (
+                            <div key={row.key} className="col-12">
+                                <div className="p-3 border-1 surface-border border-round">
+                                    <div className="flex align-items-center justify-content-between mb-2">
+                                        <span className="font-bold">Movimiento #{index + 1}</span>
+                                        {movementRows.length > 1 && index < movementRows.length - 1 && (
+                                            <Button
+                                                icon="pi pi-times"
+                                                text
+                                                severity="danger"
+                                                aria-label="Eliminar movimiento"
+                                                onClick={() => removeRow(row.key)}
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="field">
+                                        <label htmlFor={`inventory_item_id_${row.key}`} className="font-bold">Artículo</label>
+                                        <Dropdown
+                                            id={`inventory_item_id_${row.key}`}
+                                            value={row.inventory_item_id || null}
+                                            options={filteredInventoryItems.map((item) => ({ label: item.name, value: item.id }))}
+                                            onChange={(e: DropdownChangeEvent) => handleItemChange(row.key, Number(e.value))}
+                                            filter
+                                            placeholder="Busca y selecciona un artículo"
+                                            className={classNames({ 'p-invalid': rowsMissingItem(row) })}
+                                        />
+                                        {rowsMissingItem(row) && <small className="p-error">Selecciona un artículo para este movimiento.</small>}
+                                    </div>
+                                    <div className="field">
+                                        <label htmlFor={`entryQuantity_${row.key}`} className="font-bold">Cantidad de Entrada</label>
+                                        <InputNumber
+                                            id={`entryQuantity_${row.key}`}
+                                            value={row.entryQuantity}
+                                            onValueChange={(e) => handleQuantityChange(row.key, e.value, 'entryQuantity')}
+                                            min={0}
+                                        />
+                                    </div>
+                                    <div className="field">
+                                        <label htmlFor={`exitQuantity_${row.key}`} className="font-bold">Cantidad de Salida</label>
+                                        <InputNumber
+                                            id={`exitQuantity_${row.key}`}
+                                            value={row.exitQuantity}
+                                            onValueChange={(e) => handleQuantityChange(row.key, e.value, 'exitQuantity')}
+                                            min={0}
+                                        />
+                                    </div>
+                                    <div className="field">
+                                        <label htmlFor={`observation_${row.key}`} className="font-bold">Observación</label>
+                                        <InputTextarea
+                                            id={`observation_${row.key}`}
+                                            value={row.observation}
+                                            onChange={(e) => handleObservationChange(row.key, e)}
+                                            rows={2}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                    <div className="field">
-                        <label htmlFor="entryQuantity" className="font-bold">Cantidad de Entrada</label>
-                        <InputNumber
-                            id="entryQuantity"
-                            value={movementForm.entryQuantity}
-                            onValueChange={(e) => handleQuantityChange(e.value, 'entryQuantity')}
-                            min={0}
-                        />
-                    </div>
-                    <div className="field">
-                        <label htmlFor="exitQuantity" className="font-bold">Cantidad de Salida</label>
-                        <InputNumber
-                            id="exitQuantity"
-                            value={movementForm.exitQuantity}
-                            onValueChange={(e) => handleQuantityChange(e.value, 'exitQuantity')}
-                            min={0}
-                        />
-                    </div>
-                    <div className="field">
-                        <label htmlFor="observation" className="font-bold">Observación</label>
-                        <InputTextarea
-                            id="observation"
-                            value={movementForm.observation}
-                            onChange={handleObservationChange}
-                            rows={3}
-                        />
-                    </div>
-                    {quantitiesInvalid && <Message severity="warn" text="Debes ingresar una cantidad de entrada o salida mayor a 0." />}
-                    <Message severity="info" text="Si entrada y salida son 0 no se enviará ninguna solicitud." />
+                    {showNoQuantityWarning && <Message severity="warn" text="Agrega al menos un movimiento con entrada o salida mayor a 0." />}
+                    <Message severity="info" text="Cada fila permite enviar entrada y/o salida para distintos artículos. Las cantidades empiezan en 0." />
                 </>
             );
         },
-        getItemDisplayName: (movement) => `${movement.item} - ${movement.movement_type}`,
+        getItemDisplayName: (movement) => movement.inventory_item || `Movimiento ${movement.id}`,
         emptyItem: emptyInventoryMovement,
         initialData: inventoryMovements,
-        validateItem: () => movementForm.inventory_item_id > 0 && (movementForm.entryQuantity > 0 || movementForm.exitQuantity > 0),
+        validateItem: () => hasValidMovements(),
         onSaveItem: async () => {
             await saveMovements();
             return { ...emptyInventoryMovement } as InventoryMovement;
         },
+        onDeleteItem: async (id: number) => {
+            await inventoryItemAPI.deleteMovement(id);
+            await refetch();
+        },
+        enableEditAction: false,
     };
     if (isLoading) {
         return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
@@ -155,3 +249,4 @@ function InventoryMovementPage() {
 }
 
 export default InventoryMovementPage;
+
