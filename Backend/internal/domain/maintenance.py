@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, TYPE_CHECKING
 from sqlalchemy import String
 from sqlalchemy.orm import mapped_column, Mapped, relationship
@@ -12,5 +13,6 @@ class Maintenance(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     description: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(nullable=False)
 
     inventory_item_maintenances: Mapped[List["InventoryItemMaintenance"]] = relationship(back_populates="maintenance")

@@ -1,9 +1,11 @@
 from pydantic import BaseModel
 
 class SectionBase(BaseModel):
+    id: int
     name: str
 
 class SectionCreate(SectionBase):
+    id: int | None = None
     pass
 
 class SectionUpdate(BaseModel):

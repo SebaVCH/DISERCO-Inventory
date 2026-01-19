@@ -22,9 +22,12 @@ def create_token(user):
     return token
 
 def decode_token(token):
-    return jwt.decode(token,JWTSecret,algorithm=JWTAlgorithm)
+    return jwt.decode(token,JWTSecret,algorithms=[JWTAlgorithm])
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer), db: Session = Depends(get_db)):
+security = HTTPBearer(auto_error=False)
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Credenciales no encontradas")
     token = credentials.credentials
     try:
         payload = decode_token(token)
@@ -32,7 +35,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBea
         if not isinstance(email,str):
             raise HTTPException(status_code=401, detail="Token invalido")
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token invalido")
+        raise HTTPException(status_code=401, detail="Token invalidooo")
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")

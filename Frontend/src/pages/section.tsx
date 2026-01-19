@@ -7,6 +7,7 @@ import {useSection} from "../hooks/useSection.ts";
 import {useEffect, useState} from "react";
 import {ProgressSpinner} from "primereact/progressspinner";
 import {Message} from "primereact/message";
+import sectionAPI from "../services/sectionService.ts";
 
 const emptySection: Section = {
     id: 0,
@@ -49,6 +50,16 @@ function SectionPage() {
         emptyItem: emptySection,
         initialData: sections,
         validateItem: (section) => section.name.trim() !== '',
+        onSaveItem: async (section, isNew) => {
+            if (isNew) {
+                return await sectionAPI.createSection({ name: section.name });
+            }
+            await sectionAPI.updateSection(section.id, { name: section.name });
+            return { ...section };
+        },
+        onDeleteItem: async (id) => {
+            await sectionAPI.deleteSection(id);
+        },
     };
 
     if (isLoading) {

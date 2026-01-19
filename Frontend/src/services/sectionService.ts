@@ -4,8 +4,8 @@ import axiosInstance from "../lib/axios.ts";
 const sectionPath = '/section';
 
 const sectionAPI = {
-    createSection: async (): Promise<Section> => {
-        const response = await axiosInstance.post(`${sectionPath}/`);
+    createSection: async (data : {name : string}): Promise<Section> => {
+        const response = await axiosInstance.post(`${sectionPath}/`, data);
         return response.data;
     },
 
@@ -14,13 +14,8 @@ const sectionAPI = {
         return response.data;
     },
 
-    getSectionByID: async (id: number): Promise<Section> => {
-        const response = await axiosInstance.get(`${sectionPath}/${id}`);
-        return response.data;
-    },
-
-    updateSection: async (id: number): Promise<Section> => {
-        const response = await axiosInstance.put(`${sectionPath}/${id}`);
+    updateSection: async (id: number, data : {name : string}): Promise<Section> => {
+        const response = await axiosInstance.put(`${sectionPath}/${id}`, data);
         return response.data;
     },
 

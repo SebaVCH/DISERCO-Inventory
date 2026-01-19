@@ -1,5 +1,4 @@
 from pydantic import BaseModel, EmailStr
-from internal.schemas.notification_subscription_schema import NotificationSubscriptionRead
 
 class AppUserBase(BaseModel):
     email: EmailStr
@@ -14,15 +13,8 @@ class AppUserLogin(BaseModel):
 
 class AppUserRead(AppUserBase):
     id: int
-    notification_subscription: NotificationSubscriptionRead | None = None
-
-    model_config = {
-        "from_attributes": True
-    }
+    pass
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-
-class MessageResponse(BaseModel):
-    message: str

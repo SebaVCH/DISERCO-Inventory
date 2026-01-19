@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from internal.domain.notification_subscription import NotificationSubscription
 from internal.infrastructure.database.db import get_db
@@ -12,7 +12,7 @@ def create_notification_subscription():
 
 @router.get("/")
 def get_notification_subscriptions(db: Session = Depends(get_db)):
-    users_sub = db.query(NotificationSubscription).all()
+    users_sub = db.query(NotificationSubscription).options(joinedload(NotificationSubscription.user)).all()
     return users_sub
 
 @router.delete("/{subscription_id}")

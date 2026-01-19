@@ -15,7 +15,7 @@ from internal.domain.section_inventory_item import SectionInventoryItem
 router = APIRouter(prefix="/inventory-item", tags=["inventory-item"])
 
 @router.post("/")
-def create_inventory_item(inventory_item_data: InventoryItemCreate,db: Session = Depends(get_db)):
+def create_inventory_item(inventory_item_data: InventoryItemCreate, db: Session = Depends(get_db)):
     new_section_inventory_item = SectionInventoryItem(
         section_id=inventory_item_data.section_id,
         inventory_item_id=inventory_item_data.id
@@ -27,12 +27,7 @@ def create_inventory_item(inventory_item_data: InventoryItemCreate,db: Session =
     return new_inventory_item
 
 @router.post("/entry/{item_id}/user/{user_id}")
-def create_inventory_item_entry(
-    inventory_item_movement_data: InventoryMovementCreate,
-    item_id: int,
-    user_id: int,
-    db: Session = Depends(get_db),
-):
+def create_inventory_item_entry(inventory_item_movement_data: InventoryMovementCreate,item_id: int,user_id: int,db: Session = Depends(get_db),):
     try:
         new_inventory_item_entry = InventoryMovement(
             inventory_item_id=item_id,
@@ -56,12 +51,7 @@ def create_inventory_item_entry(
     return new_inventory_item_entry
 
 @router.post("/exit/{item_id}/user/{user_id}")
-def create_inventory_item_exit(
-    inventory_item_movement_data: InventoryMovementCreate,
-    item_id: int,
-    user_id: int,
-    db: Session = Depends(get_db),
-):
+def create_inventory_item_exit(inventory_item_movement_data: InventoryMovementCreate,item_id: int,user_id: int,db: Session = Depends(get_db)):
     try:
         new_inventory_item_exit = InventoryMovement(
             inventory_item_id=item_id,
@@ -86,12 +76,18 @@ def create_inventory_item_exit(
 
 @router.delete("/{inventory_item_id}")
 def delete_inventory_item(inventory_item_id: int, db: Session = Depends(get_db)):
+    existing_item = db.query(InventoryItem).filter(InventoryItem.id == inventory_item_id).first()
+    if not existing_item:
+        raise HTTPException(status_code=404, detail="Elemento no encontrado")
     db.query(InventoryItem).filter(InventoryItem.id == inventory_item_id).update({"is_deleted": True})
     db.commit()
     return {"Elemento borrado"}
 
 @router.put("/{inventory_item_id}")
-def update_inventory_item(inventory_item_id: int,data: dict ,db: Session = Depends(get_db) ):
+def update_inventory_item(inventory_item_id: int,data: dict ,db: Session = Depends(get_db)):
+    existing_item = db.query(InventoryItem).filter(InventoryItem.id == inventory_item_id).first()
+    if not existing_item:
+        raise HTTPException(status_code=404, detail="Elemento no encontrado")
     db.execute(update(InventoryItem).filter_by(id=inventory_item_id).values(**data))
     db.commit()
     return {"Elemento actualizado"}

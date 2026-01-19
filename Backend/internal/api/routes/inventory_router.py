@@ -57,6 +57,7 @@ def get_movement_inventory(db: Session = Depends(get_db)):
         result.append(InventoryMovementRead(
             id = item.id,
             inventory_item= item.inventory_item.name,
+            inventory_item_description= item.inventory_item.description,
             inventory_item_id= item.inventory_item.id,
             user= item.user.full_name,
             quantity= item.quantity,

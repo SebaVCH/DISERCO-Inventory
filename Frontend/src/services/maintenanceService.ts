@@ -17,13 +17,7 @@ const maintenanceAPI = {
     deleteMaintenance: async (id: number): Promise<User[]> => {
         const response = await axiosInstance.delete(`${maintenancePath}/${id}`);
         return response.data;
-    },
-
-    getMaintenanceByID: async (id: number): Promise<User[]> => {
-        const response = await axiosInstance.get(`${maintenancePath}/${id}`);
-        return response.data;
     }
-
 }
 
 export default maintenanceAPI;

@@ -2,7 +2,6 @@ import CrudDataTable, {type CrudDataTableConfig} from "../components/crudDataTab
 import {InputNumber} from "primereact/inputnumber";
 import {InputTextarea} from "primereact/inputtextarea";
 import {Dropdown, type DropdownChangeEvent} from "primereact/dropdown";
-import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import {classNames} from "primereact/utils";
 import type {InventoryMovement} from "../types/inventoryMovement.ts";
@@ -14,7 +13,7 @@ import {Message} from "primereact/message";
 
 const emptyInventoryMovement: InventoryMovement = {
     id: 0,
-    item: "",
+    inventory_item: "",
     user: "",
     quantity: 0,
     movement_type: "",
@@ -38,7 +37,7 @@ const createEmptyRow = (): MovementRow => ({
     exitQuantity: 0,
 });
 
-const dateBodyTemplate = (rowData) => {
+const dateBodyTemplate = (rowData: InventoryMovement) => {
     const date = new Date(rowData.created_at);
     return date.toLocaleString('es-ES', {
         day: '2-digit',
@@ -49,6 +48,11 @@ const dateBodyTemplate = (rowData) => {
         second: '2-digit'
     });
 };
+
+const itemNameTemplate = (rowData: InventoryMovement) => {
+    const itemDesc = (rowData as any).inventory_item_description ?? "";
+    return itemDesc ? `${rowData.inventory_item} ${itemDesc}` : rowData.inventory_item;
+}
 
 function InventoryMovementPage() {
     const { data, isLoading, isError, refetch } = useInventoryMovement();
@@ -146,7 +150,7 @@ function InventoryMovementPage() {
         title: 'Gestión de Movimientos de Inventario',
         columns: [
             { field: 'id', header: 'Código', sortable: true, style: { minWidth: '6rem' } },
-            { field: 'inventory_item', header: 'Artículo', sortable: true, style: { minWidth: '12rem' } },
+            { field: 'inventory_item', header: 'Artículo',body: itemNameTemplate ,sortable: true, style: { minWidth: '12rem' } },
             { field: 'user', header: 'Usuario', sortable: true, style: { minWidth: '10rem' } },
             { field: 'quantity', header: 'Cantidad', sortable: true, style: { minWidth: '6rem' } },
             { field: 'movement_type', header: 'Tipo de Movimiento', sortable: true, style: { minWidth: '6rem' } },

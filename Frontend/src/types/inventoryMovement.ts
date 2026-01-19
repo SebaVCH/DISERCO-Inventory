@@ -6,4 +6,5 @@ export interface InventoryMovement {
     movement_type: string
     observation?: string
     created_at: string
+    description?: string
 }

@@ -21,6 +21,7 @@ class InventoryMovementCreate(BaseModel):
 class InventoryMovementRead(InventoryMovementBase):
     user: str
     inventory_item: str
+    inventory_item_description: str | None = None
 
     model_config = {
         "from_attributes": True

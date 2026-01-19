@@ -7,9 +7,7 @@ from internal.schemas.user_schema import (
     AppUserBase,
     AppUserCreate,
     AppUserLogin,
-    AppUserRead,
-    TokenResponse,
-    MessageResponse
+    TokenResponse
 )
 from internal.schemas.section_schema import (
     SectionBase,
@@ -21,7 +19,8 @@ from internal.schemas.maintenance_schema import (
     MaintenanceBase,
     MaintenanceCreate,
     MaintenanceUpdate,
-    MaintenanceRead
+    MaintenanceRead,
+    MaintenanceItemAssignment,
 )
 from internal.schemas.invetory_item_schema import (
     InventoryItemBase,

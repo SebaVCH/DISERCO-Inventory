@@ -3,20 +3,21 @@ from sqlalchemy.orm import Session
 
 from internal.domain.user import User
 from internal.infrastructure.database.db import get_db
-from internal.schemas import AppUserCreate, AppUserLogin
-from internal.utils.auth_utils import encrypt_password, verify_password, create_token
+from internal.utils.auth_utils import encrypt_password, verify_password, create_token, get_current_user
+from internal.schemas.user_schema import TokenResponse, AppUserRead, AppUserCreate, AppUserLogin
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-@router.post("/login")
+@router.post("/login", response_model=TokenResponse)
 def login(user: AppUserLogin,db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
     if not existing_user or not verify_password(user.password, existing_user.password_hash):
         raise HTTPException(status_code=400, detail="Correo o contraseña incorrectos")
 
-    return {"Token": create_token(existing_user)}
+    token = create_token(existing_user)
+    return {"access_token": token, "token_type": "bearer"}
 
-@router.post("/register")
+@router.post("/register", response_model=TokenResponse)
 def register(user: AppUserCreate,db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
@@ -28,24 +29,18 @@ def register(user: AppUserCreate,db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return {"Token": create_token(existing_user)}
+    token = create_token(new_user)
+    return {"access_token": token, "token_type": "bearer"}
 
-@router.get("/profile")
-def profile():
-    return {"message": "Profile"}
-
-@router.get("/logout")
-def logout():
-    return {"message": "Logout"}
+@router.get("/profile", response_model=AppUserRead)
+def profile(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    existing_user = db.query(User).filter(User.id == user.id).first()
+    return existing_user
 
 @router.get("/get-users")
 def get_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
     return users
-
-@router.get("/get-user/{user_id}")
-def get_user(user_id: int):
-    return {"message": f"Get user {user_id}"}
 
 @router.delete("/delete-user/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
