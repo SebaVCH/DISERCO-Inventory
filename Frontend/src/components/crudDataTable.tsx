@@ -25,7 +25,7 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
         submitted: boolean,
         onInputChange: (e: React.ChangeEvent<HTMLInputElement>, name: string) => void,
         onInputTextAreaChange: (e: React.ChangeEvent<HTMLTextAreaElement>, name: string) => void,
-        onInputNumberChange: (e: any, name: string) => void
+        onInputNumberChange: (e: { value: number | null }, name: string) => void
     ) => ReactNode;
     getItemDisplayName: (item: T) => string;
     emptyItem: T;
@@ -34,6 +34,8 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     onDeleteItem?: (id: number) => Promise<void>;
     onSaveItem?: (item: T, isNew: boolean) => Promise<T>;
     enableEditAction?: boolean;
+    additionalActions?: (item: T) => ReactNode;
+    enableCreateAction?: boolean;
 }
 
 interface CrudDataTableProps<T extends BaseEntity> {
@@ -54,6 +56,8 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         onDeleteItem,
         onSaveItem,
         enableEditAction = true,
+        additionalActions,
+        enableCreateAction = true,
     } = config;
 
     const [items, setItems] = useState<T[]>(initialData);
@@ -93,19 +97,19 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
             try {
                 const isNew = !item.id;
                 const savedItem = onSaveItem ? await onSaveItem(item, isNew) : item;
-                let _items = [...items];
-                let _item = { ...savedItem };
+                const updatedItems = [...items];
+                const updatedItem = { ...savedItem };
 
                 if (!isNew) {
                     const index = findIndexById(item.id);
                     if (index !== -1) {
-                        _items[index] = _item;
+                        updatedItems[index] = updatedItem;
                     }
                 } else {
-                    _items.push(_item);
+                    updatedItems.push(updatedItem);
                 }
 
-                setItems(_items);
+                setItems(updatedItems);
                 toast.current?.show({
                     severity: 'success',
                     summary: 'Exitoso',
@@ -114,7 +118,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 });
                 setItemDialog(false);
                 setItem(emptyItem);
-            } catch (error) {
+            } catch (_error) {
                 toast.current?.show({
                     severity: 'error',
                     summary: 'Error',
@@ -141,15 +145,15 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
             if (onDeleteItem) {
                 await onDeleteItem(item.id);
             }
-            let _items = items.filter((val) => val.id !== item.id);
-            setItems(_items);
+            const remainingItems = items.filter((val) => val.id !== item.id);
+            setItems(remainingItems);
             toast.current?.show({
                 severity: 'success',
                 summary: 'Exitoso',
                 detail: `${entityName} Eliminado`,
                 life: 3000
             });
-        } catch (error) {
+        } catch (_error) {
             toast.current?.show({
                 severity: 'error',
                 summary: 'Error',
@@ -195,19 +199,22 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     const leftToolbarTemplate = () => {
         return (
             <div className="flex flex-wrap gap-2">
-                <Button
-                    label="Nuevo"
-                    icon="pi pi-plus"
-                    severity="success"
-                    onClick={openNew}
-                />
+                {enableCreateAction && (
+                    <Button
+                        label="Nuevo"
+                        icon="pi pi-plus"
+                        severity="success"
+                        onClick={openNew}
+                    />
+                )}
             </div>
         );
     };
 
     const actionBodyTemplate = (rowData: T) => {
         return (
-            <React.Fragment>
+            <div className="flex gap-2">
+                {additionalActions && additionalActions(rowData)}
                 {enableEditAction && (
                     <Button
                         icon="pi pi-pencil"
@@ -226,7 +233,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     disabled={isDeleting}
                     onClick={() => confirmDeleteItem(rowData)}
                 />
-            </React.Fragment>
+            </div>
         );
     };
 
@@ -256,8 +263,8 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
 
     const deleteItemDialogFooter = (
         <React.Fragment>
-            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteItemDialog} disabled={isDeleting} />
-            <Button label="Sí" icon="pi pi-check" severity="danger" onClick={deleteItem} loading={isDeleting} />
+            <Button label="No" onClick={hideDeleteItemDialog} disabled={isDeleting} />
+            <Button label="Sí" severity="danger" onClick={deleteItem} disabled={isDeleting} />
         </React.Fragment>
     );
 
