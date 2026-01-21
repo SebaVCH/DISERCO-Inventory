@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import String, ForeignKey, true
 from sqlalchemy.orm import mapped_column, Mapped, relationship
@@ -23,6 +24,7 @@ class InventoryItem(Base):
     critical_stock_quantity: Mapped[Optional[int]] = mapped_column()
     comments: Mapped[Optional[str]] = mapped_column(String(255))
     is_deleted: Mapped[bool] = mapped_column(nullable=False, default=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column()
 
     section: Mapped[Optional["Section"]] = relationship(back_populates="inventory_items")
     movements: Mapped[List["InventoryMovement"]] = relationship(back_populates="inventory_item")

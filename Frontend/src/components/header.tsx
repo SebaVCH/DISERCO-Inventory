@@ -2,10 +2,13 @@ import { TabMenu } from 'primereact/tabmenu';
 import type {MenuItem} from 'primereact/menuitem';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './header.css';
+import useUserStore from "../store/useUserStore.ts";
+import userAPI from "../services/userService.ts";
 
 function Header() {
     const navigate = useNavigate();
     const location = useLocation();
+    const {user, isAuthenticated, clearSession} = useUserStore();
 
     const leftItems: MenuItem[] = [
         { label: 'Inventario', icon: 'pi pi-warehouse', command: () => navigate('/inventory') },
@@ -16,8 +19,15 @@ function Header() {
         { label: 'Notificaciones', icon: 'pi pi-bell', command: () => navigate('/notifications') }
     ];
 
-    const rightItems: MenuItem[] = [
-        { label: 'Mi cuenta', icon: 'pi pi-user', command: () => navigate('/auth') }
+    const rightItems: MenuItem[] = isAuthenticated ? [
+        { label: user?.full_name ?? 'Mi cuenta', icon: 'pi pi-user' },
+        { label: 'Cerrar sesión', icon: 'pi pi-sign-out', command: () => {
+                userAPI.logout();
+                clearSession();
+                navigate('/auth');
+            } }
+    ] : [
+        { label: 'Iniciar sesión / Registrar', icon: 'pi pi-user', command: () => navigate('/auth') }
     ];
 
     const getActiveIndex = () => {

@@ -1,25 +1,24 @@
 import axiosInstance from "../lib/axios.ts";
-import type {User} from "../types/user.ts";
+import type {LoginPayload, RegisterPayload, TokenResponse, User, UserProfile} from "../types/user.ts";
 
 const userPath = '/user';
 
 const userAPI = {
-    login: async (): Promise<User[]> => {
-        const response = await axiosInstance.post(`${userPath}/login`);
+    login: async (payload: LoginPayload): Promise<TokenResponse> => {
+        const response = await axiosInstance.post(`${userPath}/login`, payload);
         return response.data;
     },
 
-    register: async (): Promise<User[]> => {
-        const response = await axiosInstance.post(`${userPath}/register`);
+    register: async (payload: RegisterPayload): Promise<TokenResponse> => {
+        const response = await axiosInstance.post(`${userPath}/register`, {
+            email: payload.email,
+            full_name: payload.full_name,
+            password_hash: payload.password,
+        });
         return response.data;
     },
 
-    logout: async (): Promise<User[]> => {
-        const response = await axiosInstance.post(`${userPath}/logout`);
-        return response.data;
-    },
-
-    getProfile: async (): Promise<User[]> => {
+    getProfile: async (): Promise<UserProfile> => {
         const response = await axiosInstance.get(`${userPath}/profile`);
         return response.data;
     },
@@ -29,10 +28,9 @@ const userAPI = {
         return response.data;
     },
 
-    getUserByID: async (id: number): Promise<User[]> => {
-        const response = await axiosInstance.get(`${userPath}/get-user/${id}`);
-        return response.data;
-    }
+    logout: () => {
+        localStorage.removeItem('token');
+    },
 }
 
 export default userAPI;

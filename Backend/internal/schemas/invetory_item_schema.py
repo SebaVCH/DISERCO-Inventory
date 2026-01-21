@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 class InventoryItemBase(BaseModel):
@@ -33,6 +34,7 @@ class InventoryItemRead(InventoryItemBase):
     total_exits: int
     current_stock: int
     section_name: str
+    deleted_at: datetime | None = None
 
     model_config = {
         "from_attributes": True

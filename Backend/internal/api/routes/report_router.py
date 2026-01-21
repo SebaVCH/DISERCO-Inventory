@@ -34,27 +34,51 @@ def create_report(report_data: ReportCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_report)
 
-    # initial_date = new_report.period_start
-    # final_date = new_report.period_end
-    #
-    # all_movements = db.query(InventoryMovement).filter(InventoryMovement.movement_date >= initial_date, InventoryMovement.movement_date <= final_date).options(joinedload(InventoryMovement.inventory_item)).all()
-    # if not all_movements:
-    #     raise HTTPException(status_code=404, detail="No hay movimientos en el periodo seleccionado")
-    #
-    # for movement in all_movements:
-    #     new_report_item = ReportInventoryItem(
-    #         report_id= new_report.id,
-    #         inventory_item_id= movement.inventory_item.id,
-    #         stock_at_generation =
-    #     )
+    initial_date = new_report.period_start
+    final_date = new_report.period_end
+
+    all_movements = db.query(InventoryMovement).filter(InventoryMovement.movement_date >= initial_date, InventoryMovement.movement_date <= final_date).options(joinedload(InventoryMovement.inventory_item)).all()
+    if not all_movements:
+        raise HTTPException(status_code=404, detail="No hay movimientos en el periodo seleccionado")
+
+    post_movements = db.query(InventoryMovement).filter(InventoryMovement.movement_date > final_date).options(joinedload(InventoryMovement.inventory_item)).all()
+    if not post_movements:
+        for movement in all_movements:
+            new_report_item = ReportInventoryItem(
+            report_id= new_report.id,
+            inventory_item_id= movement.inventory_item.id,
+            stock_at_generation = movement.inventory_item.current_stock
+            )
+            db.add(new_report_item)
+            db.commit()
+            db.refresh(new_report_item)
+    else:
+        map_data = {}
+        for movement in post_movements:
+            if movement.inventory_item.id in map_data and movement.movement_type == "Salida":
+                map_data[movement.inventory_item.id] += movement.quantity
+            elif  movement.inventory_item.id in map_data and movement.movement_type == "Entrada":
+                map_data[movement.inventory_item.id] -= movement.quantity
+            else:
+                map_data[movement.inventory_item.id] = movement.quantity
+
+        for movement in all_movements:
+            new_report_item = ReportInventoryItem(
+                report_id= new_report.id,
+                inventory_item_id= movement.inventory_item.id,
+                stock_at_generation = movement.inventory_item.current_stock - map_data[movement.inventory_item.id]
+            )
+            db.add(new_report_item)
+            db.commit()
+            db.refresh(new_report_item)
 
     return new_report
 
 @router.get("/{report_id}")
 def get_report_by_id(report_id: int, db: Session = Depends(get_db)):
     buffer = io.BytesIO()
-    report = db.query(Report).filter(Report.id == report_id).first()
-    if not report:
+    item_reports = db.query(ReportInventoryItem).filter(ReportInventoryItem.report_id == report_id).all()
+    if not item_reports:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")
 
     return StreamingResponse (
@@ -71,5 +95,4 @@ def delete_report(report_id: int, db: Session = Depends(get_db)):
 
     db.delete(report)
     db.commit()
-    return {"message": "Reporte eliminado exitosamente"}
-
+    return {"Reporte eliminado exitosamente"}

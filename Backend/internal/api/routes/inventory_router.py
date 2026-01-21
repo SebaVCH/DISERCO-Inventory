@@ -23,7 +23,8 @@ def append_section_name(inventory: list[Any], result: list[Any]):
             has_critical_stock=item.has_critical_stock,
             critical_stock_quantity=item.critical_stock_quantity,
             comments=item.comments,
-            is_deleted=item.is_deleted
+            is_deleted=item.is_deleted,
+            deleted_at=item.deleted_at
         ))
 
 @router.get("/total-inventory/{status}", response_model=List[InventoryItemRead])

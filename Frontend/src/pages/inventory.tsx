@@ -15,6 +15,7 @@ import inventoryItemAPI from "../services/inventoryItemService.ts";
 import {Dropdown, type DropdownChangeEvent} from "primereact/dropdown";
 import {useSection} from "../hooks/useSection.ts";
 import type { Section } from "../types/section";
+import type {InventoryMovement} from "../types/inventoryMovement.ts";
 
 const emptyInventoryItem: InventoryItem = {
     id: 0,
@@ -30,6 +31,18 @@ const emptyInventoryItem: InventoryItem = {
 
 const hasCriticalStockTemplate = (rowData: InventoryItem) => rowData.has_critical_stock ? 'Si' : 'No';
 const isDeletedTemplate = (rowData: InventoryItem) => rowData.is_deleted ? 'Si' : 'No';
+const dateTemplate = (rowData: InventoryItem) => {
+    if (!rowData.deleted_at) return '';
+    const date = new Date(rowData.deleted_at);
+    return date.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+};
 
 function Inventory() {
     const [statusFilter, setStatusFilter] = useState<'all' | 'unhidden' | 'hidden' | 'critical'>('all');
@@ -61,6 +74,7 @@ function Inventory() {
             { field: 'critical_stock_quantity', header: 'Stock crítico minimo', sortable: true, style: { minWidth: '8rem' } },
             { field: 'comments', header: 'Comentarios', sortable: true, style: { minWidth: '8rem' } },
             { field: 'is_deleted', header: '¿Esta eliminado?', body: isDeletedTemplate, sortable: true, style: { minWidth: '6rem' } },
+            { field: 'deleted_at', header: 'Fecha de eliminacion/baja?',body: dateTemplate , sortable: true, style: { minWidth: '6rem' } },
         ],
         dialogContent: (item, submitted, onInputChange, onInputTextAreaChange, onInputNumberChange) => (
             <>

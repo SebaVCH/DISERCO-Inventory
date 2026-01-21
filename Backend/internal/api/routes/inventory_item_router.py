@@ -79,7 +79,7 @@ def delete_inventory_item(inventory_item_id: int, db: Session = Depends(get_db))
     existing_item = db.query(InventoryItem).filter(InventoryItem.id == inventory_item_id).first()
     if not existing_item:
         raise HTTPException(status_code=404, detail="Elemento no encontrado")
-    db.query(InventoryItem).filter(InventoryItem.id == inventory_item_id).update({"is_deleted": True})
+    db.query(InventoryItem).filter(InventoryItem.id == inventory_item_id).update({"is_deleted": True, "deleted_at": datetime.now(ZoneInfo("America/Santiago"))})
     db.commit()
     return {"Elemento borrado"}
 
