@@ -17,4 +17,4 @@ class ReportInventoryItem(Base):
     stock_at_generation: Mapped[int] = mapped_column(nullable=False)
 
     report: Mapped["Report"] = relationship(back_populates="items")
-    inventory_item: Mapped["InventoryItem"] = relationship()
+    inventory_item: Mapped["InventoryItem"] = relationship(back_populates="reports")

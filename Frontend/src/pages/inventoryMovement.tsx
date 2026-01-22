@@ -10,6 +10,7 @@ import inventoryItemAPI from "../services/inventoryItemService.ts";
 import {useEffect, useState} from "react";
 import {ProgressSpinner} from "primereact/progressspinner";
 import {Message} from "primereact/message";
+import useUserStore from "../store/useUserStore.ts";
 
 const emptyInventoryMovement: InventoryMovement = {
     id: 0,
@@ -55,11 +56,12 @@ const itemNameTemplate = (rowData: InventoryMovement) => {
 }
 
 function InventoryMovementPage() {
-    const { data, isLoading, isError, refetch } = useInventoryMovement();
-    const { data: inventoryItems = [] } = useInventory('unhidden');
-    const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([]);
-    const [movementRows, setMovementRows] = useState<MovementRow[]>([createEmptyRow()]);
-    const [itemSearch, setItemSearch] = useState("");
+     const { data, isLoading, isError, refetch } = useInventoryMovement();
+     const { data: inventoryItems = [] } = useInventory('unhidden');
+     const { user } = useUserStore();
+     const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([]);
+     const [movementRows, setMovementRows] = useState<MovementRow[]>([createEmptyRow()]);
+     const [itemSearch, setItemSearch] = useState("");
 
     useEffect(() => {
         if (data) {
@@ -110,9 +112,10 @@ function InventoryMovementPage() {
     const hasValidMovements = () => movementRows.some((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
 
     const saveMovements = async () => {
-        const userId = 1; // TODO: replace with user id from auth token
-        const actionableRows = movementRows.filter((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
-        const requests: Promise<any>[] = [];
+        if (!user?.id) return;
+        const userId = user.id;
+         const actionableRows = movementRows.filter((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
+         const requests: Promise<any>[] = [];
 
         actionableRows.forEach((row) => {
             const payload = { observation: row.observation } as { quantity: number; observation?: string };

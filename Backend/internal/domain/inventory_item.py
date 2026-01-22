@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from internal.domain.section import Section
     from internal.domain.inventory_movement import InventoryMovement
     from internal.domain.inventory_item_maintenance import InventoryItemMaintenance
+    from internal.domain.report_inventory_item import ReportInventoryItem
 
 class InventoryItem(Base):
     __tablename__ = "inventory_item"
@@ -29,3 +30,4 @@ class InventoryItem(Base):
     section: Mapped[Optional["Section"]] = relationship(back_populates="inventory_items")
     movements: Mapped[List["InventoryMovement"]] = relationship(back_populates="inventory_item")
     maintenances: Mapped[List["InventoryItemMaintenance"]] = relationship(back_populates="inventory_item")
+    reports: Mapped[List["ReportInventoryItem"]] = relationship(back_populates="inventory_item")
