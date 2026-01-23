@@ -1,6 +1,7 @@
+from decimal import Decimal
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from internal.domain import Base
@@ -14,7 +15,7 @@ class InventoryMovement(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_item.id"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id"), nullable=False)
-    quantity: Mapped[int] = mapped_column(nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2), nullable=False, default=Decimal('0.00'))
     movement_type: Mapped[str] = mapped_column(String(20), nullable=False)
     observation: Mapped[Optional[str]] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(nullable=False)

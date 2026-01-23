@@ -1,5 +1,6 @@
+from decimal import Decimal
 from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Numeric
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from internal.domain import Base
@@ -14,7 +15,7 @@ class ReportInventoryItem(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     report_id: Mapped[int] = mapped_column(ForeignKey("report.id"), nullable=False)
     inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_item.id"), nullable=False)
-    stock_at_generation: Mapped[int] = mapped_column(nullable=False)
+    stock_at_generation: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2), nullable=False)
 
     report: Mapped["Report"] = relationship(back_populates="items")
     inventory_item: Mapped["InventoryItem"] = relationship(back_populates="reports")

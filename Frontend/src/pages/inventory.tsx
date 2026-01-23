@@ -117,6 +117,7 @@ function Inventory() {
                         onValueChange={(e) => onInputNumberChange(e, 'critical_stock_quantity')}
                         mode="decimal"
                         minFractionDigits={0}
+                        maxFractionDigits={2}
                     />
                 </div>
 

@@ -106,7 +106,11 @@ def delete_report(report_id: int, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")
-
+    item_report = db.query(ReportInventoryItem).filter(ReportInventoryItem.report_id == report_id).all()
+    if not item_report:
+        raise HTTPException(status_code=404, detail="No hay movimientos asociados al reporte")
     db.delete(report)
+    for item in item_report:
+        db.delete(item)
     db.commit()
     return {"Reporte eliminado exitosamente"}

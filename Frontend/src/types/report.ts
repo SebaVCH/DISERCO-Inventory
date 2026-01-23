@@ -7,4 +7,5 @@ export interface Report {
     generated_at: string
     period_start: string
     period_end: string
+    frequency: string
 }

@@ -201,6 +201,8 @@ function InventoryMovementPage() {
                                             value={row.entryQuantity}
                                             onValueChange={(e) => handleQuantityChange(row.key, e.value, 'entryQuantity')}
                                             min={0}
+                                            minFractionDigits={0}
+                                            maxFractionDigits={2}
                                         />
                                     </div>
                                     <div className="field">
@@ -210,6 +212,8 @@ function InventoryMovementPage() {
                                             value={row.exitQuantity}
                                             onValueChange={(e) => handleQuantityChange(row.key, e.value, 'exitQuantity')}
                                             min={0}
+                                            minFractionDigits={0}
+                                            maxFractionDigits={2}
                                         />
                                     </div>
                                     <div className="field">

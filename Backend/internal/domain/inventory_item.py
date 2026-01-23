@@ -1,6 +1,7 @@
+from decimal import Decimal
 from datetime import datetime
 from typing import Optional, List, TYPE_CHECKING
-from sqlalchemy import String, ForeignKey, true
+from sqlalchemy import String, ForeignKey, true, Numeric
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from internal.domain import Base
@@ -18,11 +19,11 @@ class InventoryItem(Base):
     section_id: Mapped[Optional[int]] = mapped_column(ForeignKey("section.id"))
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(255))
-    total_entries: Mapped[int] = mapped_column(nullable=False, default=0)
-    total_exits: Mapped[int] = mapped_column(nullable=False, default=0)
-    current_stock: Mapped[int] = mapped_column(nullable=False, default=0)
+    total_entries: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2), nullable=False, default=Decimal('0.00'))
+    total_exits: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2), nullable=False, default=Decimal('0.00'))
+    current_stock: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2), nullable=False, default=Decimal('0.00'))
     has_critical_stock: Mapped[bool] = mapped_column(nullable=False, default=False)
-    critical_stock_quantity: Mapped[Optional[int]] = mapped_column()
+    critical_stock_quantity: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=10, scale=2))
     comments: Mapped[Optional[str]] = mapped_column(String(255))
     is_deleted: Mapped[bool] = mapped_column(nullable=False, default=False)
     deleted_at: Mapped[Optional[datetime]] = mapped_column()

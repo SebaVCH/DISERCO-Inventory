@@ -1,9 +1,10 @@
+from decimal import Decimal
 from datetime import datetime
 from pydantic import BaseModel
 
 class InventoryMovementBase(BaseModel):
     id: int
-    quantity: int
+    quantity: Decimal
     movement_type: str
     observation: str | None = None
     inventory_item_id: int
@@ -15,7 +16,7 @@ class InventoryMovementBase(BaseModel):
     }
 
 class InventoryMovementCreate(BaseModel):
-    quantity: int
+    quantity: Decimal
     observation: str | None = None
 
 class InventoryMovementRead(InventoryMovementBase):
