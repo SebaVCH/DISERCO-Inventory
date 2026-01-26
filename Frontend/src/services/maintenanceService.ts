@@ -1,23 +1,23 @@
-import type {User} from "../types/user.ts";
+import type { MaintenanceAssignment, MaintenanceCreatePayload, MaintenanceSummary } from "../types/maintenance.ts";
 import axiosInstance from "../lib/axios.ts";
 
 const maintenancePath = '/maintenance';
 
 const maintenanceAPI = {
-    createMaintenance: async (): Promise<User[]> => {
-        const response = await axiosInstance.post(`${maintenancePath}/`);
+    createMaintenance: async (data: MaintenanceCreatePayload): Promise<MaintenanceSummary> => {
+        const response = await axiosInstance.post(`${maintenancePath}/`, data);
         return response.data;
     },
 
-    getMaintenances: async (): Promise<User[]> => {
+    getMaintenances: async (): Promise<MaintenanceAssignment[]> => {
         const response = await axiosInstance.get(`${maintenancePath}/`);
-        return response.data;
+        return Array.isArray(response.data) ? response.data : [];
     },
 
-    deleteMaintenance: async (id: number): Promise<User[]> => {
+    deleteMaintenance: async (id: number): Promise<{ detail?: string } | undefined> => {
         const response = await axiosInstance.delete(`${maintenancePath}/${id}`);
         return response.data;
     }
-}
+};
 
 export default maintenanceAPI;

@@ -1,5 +1,8 @@
+from zoneinfo import ZoneInfo
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
+from datetime import datetime
 
 from internal.domain.inventory_item_maintenance import InventoryItemMaintenance
 from internal.domain.maintenance import Maintenance
@@ -11,7 +14,10 @@ router = APIRouter(prefix="/maintenance", tags=["maintenance"])
 @router.post("/")
 def create_maintenance(maintenance_data: MaintenanceCreate, db: Session = Depends(get_db)):
     try:
-        new_maintenance = Maintenance(description=maintenance_data.description)
+        new_maintenance = Maintenance(
+            description=maintenance_data.description,
+            created_at=datetime.now(ZoneInfo("America/Santiago"))
+        )
         db.add(new_maintenance)
         db.flush()
 

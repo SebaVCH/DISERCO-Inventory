@@ -134,8 +134,8 @@ function ReportPage() {
                 user_id: user.id,
                 frequency: 'manual',
                 description: item.description || undefined,
-                period_start: start.toISOString(),
-                period_end: end.toISOString(),
+                period_start: new Date(new Date(start).setUTCHours(0, 0, 0, 0)).toISOString(),
+                period_end: new Date(new Date(end).setUTCHours(23, 59, 59, 0)).toISOString(),
                 generated_at: new Date().toISOString(),
             });
 
