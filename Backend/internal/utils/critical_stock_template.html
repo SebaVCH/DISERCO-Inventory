@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock crítico detectado</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #f6f7fb; }
+        .container { max-width: 680px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .header { background: #c81e1e; color: #ffffff; padding: 24px; text-align: center; }
+        .pill { display: inline-block; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.2); color: #ffffff; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; }
+        .content { padding: 24px 28px 32px; color: #2d3436; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e6ebf1; font-size: 14px; }
+        th { background: #fdeaea; color: #991b1b; font-weight: 700; }
+        .footer { padding: 18px 24px 24px; font-size: 12px; color: #6b7280; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="pill">Stock crítico</div>
+            <h1 style="margin: 10px 0 0; font-size: 24px;">Artículos con stock por debajo del mínimo</h1>
+        </div>
+        <div class="content">
+            <p>Se detectaron artículos con stock crítico. A continuación encuentras el detalle para priorizar la reposición.</p>
+            <p>Recuerda que el stock minimo se le suma la cantidad acordada (30 unidades).</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Artículo</th>
+                        <th>Stock actual</th>
+                        <th>Stock mínimo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {CRITICAL_ITEMS_ROWS}
+                </tbody>
+            </table>
+        </div>
+        <div class="footer">
+            Este aviso se genera automáticamente cuando un ítem alcanza stock crítico.
+        </div>
+    </div>
+</body>
+</html>

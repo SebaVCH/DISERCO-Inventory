@@ -1,302 +1,93 @@
-import { useState, useRef } from 'react';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Toast } from 'primereact/toast';
-import { Button } from 'primereact/button';
-import { Toolbar } from 'primereact/toolbar';
-import { IconField } from 'primereact/iconfield';
-import { InputIcon } from 'primereact/inputicon';
-import { Dialog } from 'primereact/dialog';
-import { InputText } from 'primereact/inputtext';
-import { classNames } from 'primereact/utils';
-import type { User } from '../types/user';
+import type React from 'react';
+import {useEffect, useMemo, useState} from 'react';
+import {Dropdown, type DropdownChangeEvent} from 'primereact/dropdown';
+import {classNames} from 'primereact/utils';
+import {ProgressSpinner} from 'primereact/progressspinner';
+import {Message} from 'primereact/message';
+import CrudDataTable, {type CrudDataTableConfig} from '../components/crudDataTable.tsx';
+import {useNotificationSubscriptions} from '../hooks/useNotificationSubscription.ts';
+import {useUser} from '../hooks/useUser.ts';
+import type {NotificationSubscription} from '../types/notificationSubscription.ts';
+import type {UserProfile} from '../types/user.ts';
+import notificationAPI from '../services/notificationService.ts';
 
-const initialUsers: User[] = [
-    {
-        id: 1,
-        email: "test@gmail.com",
-        full_name: "test",
-        password: "abc123"
-    },
-];
-
-const emptyUser: User = {
+const emptySubscription: NotificationSubscription = {
     id: 0,
-    email: "",
-    full_name: "",
-    password: "",
+    user_id: 0,
+    user: undefined,
 };
 
-function Notification() {
-    const [users, setUsers] = useState<User[]>(initialUsers);
-    const [userDialog, setUserDialog] = useState<boolean>(false);
-    const [deleteUserDialog, setDeleteUserDialog] = useState<boolean>(false);
-    const [deleteUsersDialog, setDeleteUsersDialog] = useState<boolean>(false);
-    const [user, setUser] = useState<User>(emptyUser);
-    const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
-    const [submitted, setSubmitted] = useState<boolean>(false);
-    const [globalFilter, setGlobalFilter] = useState<string>('');
-    const toast = useRef<Toast>(null);
-    const dt = useRef<DataTable<User[]>>(null);
+function NotificationPage() {
+    const { data: subscriptionsData = [], isLoading: isLoadingSubscriptions, isError: isErrorSubscriptions } = useNotificationSubscriptions();
+    const { data: usersData = [], isLoading: isLoadingUsers, isError: isErrorUsers } = useUser();
+    const [subscriptions, setSubscriptions] = useState<NotificationSubscription[]>([]);
 
-    const openNew = () => {
-        setUser(emptyUser);
-        setSubmitted(false);
-        setUserDialog(true);
-    };
+    useEffect(() => {
+        setSubscriptions((subscriptionsData ?? []).filter((sub) => sub.user_id !== 0));
+    }, [subscriptionsData]);
 
-    const hideDialog = () => {
-        setSubmitted(false);
-        setUserDialog(false);
-    };
+    const eligibleUsers = useMemo<UserProfile[]>(() => {
+        const subscribedIds = new Set(subscriptions.map((sub) => sub.user_id));
+        return (usersData ?? []).filter((user) => user.id !== 0 && !subscribedIds.has(user.id));
+    }, [subscriptions, usersData]);
 
-    const hideDeleteUserDialog = () => {
-        setDeleteUserDialog(false);
-    };
-
-    const hideDeleteUsersDialog = () => {
-        setDeleteUsersDialog(false);
-    };
-
-    const saveUser = () => {
-        setSubmitted(true);
-
-        if (user.full_name.trim() && user.email.trim()) {
-            const _users = [...users];
-            const _user = { ...user };
-
-            _users.push(_user);
-            toast.current?.show({
-                severity: 'success',
-                summary: 'Exitoso',
-                detail: 'Usuario agregado a notificaciones',
-                life: 3000
-            });
-
-            setUsers(_users);
-            setUserDialog(false);
-            setUser(emptyUser);
-        }
-    };
-
-    const confirmDeleteUser = (user: User) => {
-        setUser(user);
-        setDeleteUserDialog(true);
-    };
-
-    const deleteUser = () => {
-        const _users = users.filter((val) => val.id !== user.id);
-        setUsers(_users);
-        setDeleteUserDialog(false);
-        setUser(emptyUser);
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Exitoso',
-            detail: 'Usuario eliminado de notificaciones',
-            life: 3000
-        });
-    };
-
-    const confirmDeleteSelected = () => {
-        setDeleteUsersDialog(true);
-    };
-
-    const deleteSelectedUsers = () => {
-        const _users = users.filter((val) => !selectedUsers.includes(val));
-        setUsers(_users);
-        setDeleteUsersDialog(false);
-        setSelectedUsers([]);
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Exitoso',
-            detail: 'Usuarios eliminados de notificaciones',
-            life: 3000
-        });
-    };
-
-    const onInputChange = (e: React.ChangeEvent<HTMLInputElement>, name: string) => {
-        const val = (e.target && e.target.value) || '';
-        const _user = { ...user, [name]: val };
-        setUser(_user);
-    };
-
-    const leftToolbarTemplate = () => {
-        return (
-            <div className="flex flex-wrap gap-2">
-                <Button
-                    label="Agregar Usuario"
-                    icon="pi pi-plus"
-                    severity="success"
-                    onClick={openNew}
+    const config: CrudDataTableConfig<NotificationSubscription> = {
+        entityName: 'Suscripción',
+        entityNamePlural: 'Suscripciones',
+        title: 'Gestión de Notificaciones',
+        columns: [
+            { field: 'id', header: 'ID', sortable: true, style: { minWidth: '6rem' } },
+            { header: 'Nombre', body: (rowData) => rowData.user?.full_name ?? '—', style: { minWidth: '16rem' } },
+            { header: 'Correo', body: (rowData) => rowData.user?.email ?? '—', style: { minWidth: '16rem' } },
+        ],
+        dialogContent: (subscription, submitted, onInputChange) => (
+            <div className="field">
+                <label htmlFor="user_id" className="font-bold">Usuario</label>
+                <Dropdown
+                    id="user_id"
+                    value={subscription.user_id || null}
+                    options={eligibleUsers}
+                    optionLabel="full_name"
+                    optionValue="id"
+                    placeholder={eligibleUsers.length ? 'Seleccione un usuario' : 'No hay usuarios disponibles'}
+                    onChange={(e: DropdownChangeEvent) => onInputChange({ target: { value: e.value } } as unknown as React.ChangeEvent<HTMLInputElement>, 'user_id')}
+                    className={classNames({ 'p-invalid': submitted && !subscription.user_id })}
+                    filter
                 />
-                <Button
-                    label="Eliminar"
-                    icon="pi pi-trash"
-                    severity="danger"
-                    onClick={confirmDeleteSelected}
-                    disabled={!selectedUsers || !selectedUsers.length}
-                />
+                {submitted && !subscription.user_id && <small className="p-error">Seleccione un usuario.</small>}
             </div>
-        );
+        ),
+        getItemDisplayName: (subscription) => subscription.user?.full_name ?? `ID ${subscription.id}`,
+        emptyItem: emptySubscription,
+        initialData: subscriptions,
+        validateItem: (subscription) => subscription.user_id > 0,
+        enableEditAction: false,
+        enableCreateAction: eligibleUsers.length > 0,
+        onSaveItem: async (subscription, isNew) => {
+            if (!isNew) {
+                return subscription;
+            }
+            const created = await notificationAPI.createNotificationSub(subscription.user_id);
+            const linkedUser = usersData?.find((u) => u.id === created.user_id) || usersData?.find((u) => u.id === subscription.user_id);
+            const newSubscription = { ...created, user: created.user ?? linkedUser };
+            setSubscriptions((prev) => [...prev, newSubscription]);
+            return newSubscription;
+        },
+        onDeleteItem: async (id) => {
+            await notificationAPI.deleteNotificationSub(id);
+            setSubscriptions((prev) => prev.filter((subscription) => subscription.id !== id));
+        },
     };
 
-    const actionBodyTemplate = (rowData: User) => {
-        return (
-            <Button
-                icon="pi pi-trash"
-                rounded
-                outlined
-                severity="danger"
-                onClick={() => confirmDeleteUser(rowData)}
-                tooltip="Eliminar de notificaciones"
-                tooltipOptions={{ position: 'top' }}
-            />
-        );
-    };
+    if (isLoadingSubscriptions || isLoadingUsers) {
+        return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
+    }
 
-    const header = (
-        <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Gestión de Notificaciones</h4>
-            <IconField iconPosition="left">
-                <InputIcon className="pi pi-search" />
-                <InputText
-                    type="search"
-                    placeholder="Buscar..."
-                    onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        setGlobalFilter(target.value);
-                    }}
-                />
-            </IconField>
-        </div>
-    );
+    if (isErrorSubscriptions || isErrorUsers) {
+        return <Message severity="error" text="Error al cargar las suscripciones de notificaciones" />;
+    }
 
-    const userDialogFooter = (
-        <>
-            <Button label="Cancelar" icon="pi pi-times" outlined onClick={hideDialog} />
-            <Button label="Agregar" icon="pi pi-check" onClick={saveUser} />
-        </>
-    );
-
-    const deleteUserDialogFooter = (
-        <>
-            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteUserDialog} />
-            <Button label="Sí" icon="pi pi-check" severity="danger" onClick={deleteUser} />
-        </>
-    );
-
-    const deleteUsersDialogFooter = (
-        <>
-            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteUsersDialog} />
-            <Button label="Sí" icon="pi pi-check" severity="danger" onClick={deleteSelectedUsers} />
-        </>
-    );
-
-    return (
-        <div>
-            <Toast ref={toast} />
-            <div className="card">
-                <Toolbar
-                    className="mb-4"
-                    start={leftToolbarTemplate}
-                />
-
-                <DataTable
-                    ref={dt}
-                    value={users}
-                    selection={selectedUsers}
-                    selectionMode="multiple"
-                    onSelectionChange={(e) => {
-                        if (Array.isArray(e.value)) {
-                            setSelectedUsers(e.value);
-                        }
-                    }}
-                    dataKey="id"
-                    paginator
-                    rows={10}
-                    rowsPerPageOptions={[5, 10, 25]}
-                    paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
-                    globalFilter={globalFilter}
-                    header={header}
-                >
-                    <Column selectionMode="multiple" exportable={false}></Column>
-                    <Column field="full_name" header="Nombre" sortable style={{ minWidth: '16rem' }} />
-                    <Column field="email" header="Correo" sortable style={{ minWidth: '16rem' }} />
-                    <Column header="Acciones" body={actionBodyTemplate} exportable={false} style={{ minWidth: '8rem' }} />
-                </DataTable>
-            </div>
-
-            <Dialog
-                visible={userDialog}
-                style={{ width: '32rem' }}
-                breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-                header="Agregar Usuario a Notificaciones"
-                modal
-                className="p-fluid"
-                footer={userDialogFooter}
-                onHide={hideDialog}
-            >
-                <div className="field">
-                    <label htmlFor="full_name" className="font-bold">Nombre</label>
-                    <InputText
-                        id="full_name"
-                        value={user.full_name}
-                        onChange={(e) => onInputChange(e, 'full_name')}
-                        required
-                        autoFocus
-                        className={classNames({ 'p-invalid': submitted && !user.full_name })}
-                    />
-                    {submitted && !user.full_name && <small className="p-error">El nombre es requerido.</small>}
-                </div>
-                <div className="field">
-                    <label htmlFor="email" className="font-bold">Correo</label>
-                    <InputText
-                        id="email"
-                        value={user.email}
-                        onChange={(e) => onInputChange(e, 'email')}
-                        required
-                        className={classNames({ 'p-invalid': submitted && !user.email })}
-                    />
-                    {submitted && !user.email && <small className="p-error">El correo es requerido.</small>}
-                </div>
-            </Dialog>
-
-            <Dialog
-                visible={deleteUserDialog}
-                style={{ width: '32rem' }}
-                breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-                header="Confirmar"
-                modal
-                footer={deleteUserDialogFooter}
-                onHide={hideDeleteUserDialog}
-            >
-                <div className="confirmation-content">
-                    <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                    {user && (
-                        <span>
-                            ¿Está seguro de que desea eliminar a <b>{user.full_name}</b> de las notificaciones?
-                        </span>
-                    )}
-                </div>
-            </Dialog>
-
-            <Dialog
-                visible={deleteUsersDialog}
-                style={{ width: '32rem' }}
-                breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-                header="Confirmar"
-                modal
-                footer={deleteUsersDialogFooter}
-                onHide={hideDeleteUsersDialog}
-            >
-                <div className="confirmation-content">
-                    <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                    {user && <span>¿Está seguro de que desea eliminar los usuarios seleccionados de las notificaciones?</span>}
-                </div>
-            </Dialog>
-        </div>
-    );
+    return <CrudDataTable config={config} />;
 }
 
-export default Notification;
+export default NotificationPage;

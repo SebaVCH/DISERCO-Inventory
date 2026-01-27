@@ -35,7 +35,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         if not isinstance(email,str):
             raise HTTPException(status_code=401, detail="Token invalido")
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token invalidooo")
+        raise HTTPException(status_code=401, detail="Token invalido")
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
