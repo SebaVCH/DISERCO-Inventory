@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import userAPI from "../services/userService.ts";
 import { useNavigate } from "react-router-dom";
 import useUserStore from "../store/useUserStore.ts";
+import './auth.css';
 
 function Auth() {
     const navigate = useNavigate();
@@ -49,34 +50,53 @@ function Auth() {
     const disabledRegister = !email || !password || !fullName || registerMutation.isPending;
 
     return (
-        <div className="card">
-            <div className="flex flex-column md:flex-row">
-                <div className="w-full md:w-5 flex flex-column align-items-center justify-content-center gap-3 py-5">
-                    <div className="flex flex-wrap justify-content-center align-items-center gap-2">
-                        <label className="w-6rem">Correo</label>
-                        <InputText id="email" type="text" className="w-12rem" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <div className="auth-layout">
+            <div className="card auth-card">
+                <div className="auth-header">
+                    <div>
+                        <p className="auth-eyebrow">DISERCO Inventory</p>
+                        <h2 className="auth-title">Bienvenido</h2>
+                        <p className="auth-subtitle">Inicia sesión o crea tu cuenta para gestionar el inventario.</p>
                     </div>
-                    <div className="flex flex-wrap justify-content-center align-items-center gap-2">
-                        <label className="w-6rem">Contraseña</label>
-                        <InputText id="password" type="password" className="w-12rem" value={password} onChange={(e) => setPassword(e.target.value)} />
-                    </div>
-                    <Button label="Iniciar Sesión" icon="pi pi-user" className="w-10rem mx-auto" loading={loginMutation.isPending} disabled={disabledLogin} onClick={() => loginMutation.mutate()}></Button>
-                    {error && <small style={{ color: 'red' }}>{error}</small>}
                 </div>
-                <div className="w-full md:w-2">
-                    <Divider layout="vertical" className="hidden md:flex">
-                        <b>OR</b>
-                    </Divider>
-                    <Divider layout="horizontal" className="flex md:hidden" align="center">
-                        <b>OR</b>
-                    </Divider>
-                </div>
-                <div className="w-full md:w-5 flex flex-column align-items-center justify-content-center gap-3 py-5">
-                    <div className="flex flex-wrap justify-content-center align-items-center gap-2">
-                        <label className="w-6rem">Nombre</label>
-                        <InputText id="fullName" type="text" className="w-12rem" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                <div className="auth-columns">
+                    <div className="auth-column">
+                        <p className="auth-column-title">Iniciar sesión</p>
+                        <div className="auth-field">
+                            <label htmlFor="email">Correo</label>
+                            <InputText id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@empresa.com" />
+                        </div>
+                        <div className="auth-field">
+                            <label htmlFor="password">Contraseña</label>
+                            <InputText id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                        </div>
+                        <Button label="Iniciar sesión" icon="pi pi-sign-in" className="auth-button" loading={loginMutation.isPending} disabled={disabledLogin} onClick={() => loginMutation.mutate()}></Button>
+                        {error && <small className="auth-error">{error}</small>}
                     </div>
-                    <Button label="Registrarse" icon="pi pi-user-plus" severity="success" className="w-10rem" loading={registerMutation.isPending} disabled={disabledRegister} onClick={() => registerMutation.mutate()}></Button>
+                    <div className="auth-divider">
+                        <Divider layout="vertical" className="hidden md:flex">
+                            <b></b>
+                        </Divider>
+                        <Divider layout="horizontal" className="flex md:hidden" align="center">
+                            <b></b>
+                        </Divider>
+                    </div>
+                    <div className="auth-column">
+                        <p className="auth-column-title">Crear cuenta</p>
+                        <div className="auth-field">
+                            <label htmlFor="fullName">Nombre completo</label>
+                            <InputText id="fullName" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" />
+                        </div>
+                        <div className="auth-field">
+                            <label htmlFor="emailRegister">Correo</label>
+                            <InputText id="emailRegister" type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@empresa.com" />
+                        </div>
+                        <div className="auth-field">
+                            <label htmlFor="passwordRegister">Contraseña</label>
+                            <InputText id="passwordRegister" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                        </div>
+                        <Button label="Registrarse" icon="pi pi-user-plus" severity="success" className="auth-button" loading={registerMutation.isPending} disabled={disabledRegister} onClick={() => registerMutation.mutate()}></Button>
+                    </div>
                 </div>
             </div>
         </div>
