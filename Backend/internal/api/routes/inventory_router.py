@@ -15,6 +15,7 @@ def append_section_name(inventory: list[Any], result: list[Any]):
         result.append(InventoryItemRead(
             id=item.id,
             name=item.name,
+            section_id=item.section_id,
             total_entries=item.total_entries,
             total_exits=item.total_exits,
             current_stock=item.current_stock,

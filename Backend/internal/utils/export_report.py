@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Any
 
 from openpyxl import load_workbook, Workbook
+from openpyxl.chart import PieChart, Reference
 from openpyxl.styles import Side, Border
 from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct, case
@@ -29,77 +30,96 @@ def export_report_to_excel(report: Report, items_report: List[ReportInventoryIte
         bottom=side_style
     )
     replace_general_summary(report, workbook, db, sections, cell_border)
-    generate_details_for_section(items_report, report, workbook, sections, cell_border, db)
+    generate_total_inventory_detail(items_report, report, workbook, cell_border, db)
 
     buffer = io.BytesIO()
     workbook.save(buffer)
     buffer.seek(0)
     return buffer
 
-def generate_details_for_section(items_report: list[ReportInventoryItem], report: Report, workbook: Workbook, sections: List[str], cell_border: Border, db: Session):
+def generate_total_inventory_detail(items_report: list[ReportInventoryItem], report: Report, workbook: Workbook, cell_border: Border, db: Session):
 
-    for section in sections:
-        sheet_detail = workbook["Detalle Sección"]
-        workbook.copy_worksheet(sheet_detail)
-        new_sheet_detail = workbook.worksheets[-1]
-        new_sheet_detail.title = f"Detalle {section}"
-        new_sheet_detail["B4"] = section
-        new_sheet_detail["B5"] = f"{report.period_start} - {report.period_end}"
+    sheet_detail = workbook["Inventario Detallado"]
+    sheet_detail["C5"] = f"{report.period_end}"
 
-        items_in_section: dict[int, ReportInventoryItem] = {}
-        for item in items_report:
-            inventory_item = item.inventory_item
-            item_section = inventory_item.section if inventory_item else None
-            item_section_name = item_section.name if item_section else "Sin Sección"
-            if item_section_name == section and inventory_item:
-                items_in_section[inventory_item.id] = item
+    items_by_id: dict[int, ReportInventoryItem] = {}
+    for report_item in items_report:
+        inventory_item = report_item.inventory_item
+        if inventory_item:
+            items_by_id[inventory_item.id] = report_item
 
-        if not items_in_section:
-            continue
+    if not items_by_id:
+        return
 
-        item_ids = list(items_in_section.keys())
+    item_ids = list(items_by_id.keys())
 
-        movements = (
-            db.query(InventoryMovement)
-            .join(InventoryMovement.inventory_item)
-            .outerjoin(InventoryItem.section)
-            .filter(InventoryMovement.inventory_item_id.in_(item_ids))
-            .filter(InventoryMovement.created_at >= report.period_start)
-            .filter(InventoryMovement.created_at <= report.period_end)
-            .all()
-        )
+    movements = (
+        db.query(InventoryMovement)
+        .join(InventoryMovement.inventory_item)
+        .outerjoin(InventoryItem.section)
+        .filter(InventoryMovement.inventory_item_id.in_(item_ids))
+        .filter(InventoryMovement.created_at >= report.period_start)
+        .filter(InventoryMovement.created_at <= report.period_end)
+        .all()
+    )
 
-        aggregates: dict[int, dict[str, Any]] = {}
-        for mv in movements:
-            entry = aggregates.setdefault(mv.inventory_item_id, {
-                "entries": 0,
-                "exits": 0,
-                "observations": set(),
-                "responsables": set(),
-            })
-            if mv.movement_type == "Entrada":
-                entry["entries"] += mv.quantity
-            elif mv.movement_type == "Salida":
-                entry["exits"] += mv.quantity
-            if mv.observation:
-                entry["observations"].add(mv.observation)
-            if mv.user:
-                entry["responsables"].add(mv.user.full_name)
+    movements_after_period = (
+        db.query(InventoryMovement)
+        .filter(InventoryMovement.inventory_item_id.in_(item_ids))
+        .filter(InventoryMovement.created_at > report.period_end)
+        .all()
+    )
 
-        start_row = 9
-        for row_offset, (item_id, report_item) in enumerate(items_in_section.items()):
-            item = report_item.inventory_item
-            agg = aggregates.get(item_id, {"entries": 0, "exits": 0, "observations": set(), "responsables": set()})
-            row = start_row + row_offset
-            new_sheet_detail.cell(row=row, column=1, value=item.id).border = cell_border
-            new_sheet_detail.cell(row=row, column=2, value=item.name).border = cell_border
-            new_sheet_detail.cell(row=row, column=3, value=agg["entries"]).border = cell_border
-            new_sheet_detail.cell(row=row, column=4, value=agg["exits"]).border = cell_border
-            new_sheet_detail.cell(row=row, column=5, value=report_item.stock_at_generation).border = cell_border
-            new_sheet_detail.cell(row=row, column=6, value="; ".join(sorted(agg["observations"])) if agg["observations"] else None).border = cell_border
-            new_sheet_detail.cell(row=row, column=7, value=", ".join(sorted(agg["responsables"])) if agg["responsables"] else None).border = cell_border
+    aggregates: dict[int, dict[str, Any]] = {}
+    for mv in movements:
+        entry = aggregates.setdefault(mv.inventory_item_id, {
+            "entries": 0,
+            "exits": 0,
+            "observations": set(),
+            "responsables": set(),
+        })
+        if mv.movement_type == "Entrada":
+            entry["entries"] += mv.quantity
+        elif mv.movement_type == "Salida":
+            entry["exits"] += mv.quantity
+        if mv.observation:
+            entry["observations"].add(mv.observation)
+        if mv.user:
+            entry["responsables"].add(mv.user.full_name)
 
-    workbook.remove(sheet_detail)
+    adjustments_after: dict[int, dict[str, Any]] = {}
+    for mv in movements_after_period:
+        entry = adjustments_after.setdefault(mv.inventory_item_id, {"entries": 0, "exits": 0})
+        if mv.movement_type == "Entrada":
+            entry["entries"] += mv.quantity
+        elif mv.movement_type == "Salida":
+            entry["exits"] += mv.quantity
+
+    start_row = 9
+    for row_offset, item_id in enumerate(sorted(items_by_id.keys())):
+        report_item = items_by_id[item_id]
+        item = report_item.inventory_item
+        agg = aggregates.get(item_id, {"entries": 0, "exits": 0, "observations": set(), "responsables": set()})
+        outside = adjustments_after.get(item_id, {"entries": 0, "exits": 0})
+
+        section = item.section if item else None
+        section_name = section.name if section else "Sin Sección"
+        base_stock = item.current_stock
+        calculated_stock = base_stock - outside["entries"] + outside["exits"]
+
+        row = start_row + row_offset
+        sheet_detail.cell(row=row, column=1, value=item.id).border = cell_border
+        sheet_detail.cell(row=row, column=2, value=item.name).border = cell_border
+        sheet_detail.cell(row=row, column=3, value=section_name).border = cell_border
+        sheet_detail.cell(row=row, column=4, value=agg["entries"]).border = cell_border
+        sheet_detail.cell(row=row, column=5, value=agg["exits"]).border = cell_border
+        sheet_detail.cell(row=row, column=6, value=calculated_stock).border = cell_border
+        sheet_detail.cell(row=row, column=7, value="; ".join(sorted(agg["observations"])) if agg["observations"] else None).border = cell_border
+        sheet_detail.cell(row=row, column=8, value=", ".join(sorted(agg["responsables"])) if agg["responsables"] else None).border = cell_border
+
+    last_row = start_row + len(items_by_id) - 1
+    full_range = f"A8:H{last_row}"
+    sheet_detail.auto_filter.ref = full_range
 
 def get_sections(items_report: list[ReportInventoryItem]) -> list[Any]:
     sections = []

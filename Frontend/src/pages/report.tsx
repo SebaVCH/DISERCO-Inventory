@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import type { ColumnProps } from 'primereact/column';
 import { Toast } from 'primereact/toast';
+import { addLocale } from "primereact/api";
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
@@ -18,6 +19,15 @@ function ReportPage() {
     const toast = useRef<Toast>(null);
     const queryClient = useQueryClient();
     const { user } = useUserStore();
+
+    addLocale('es', {
+        firstDayOfWeek: 1,
+        dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+        dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+        dayNamesMin: ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'],
+        monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+        monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+    })
 
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
@@ -79,7 +89,7 @@ function ReportPage() {
                 </div>
                 <div className="flex flex-column gap-2">
                     <label>Frecuencia</label>
-                    <InputText value="manual" disabled readOnly />
+                    <InputText value="Manual" disabled readOnly />
                 </div>
                 <div className="flex flex-column gap-2">
                     <label>Rango de fechas</label>
@@ -91,6 +101,7 @@ function ReportPage() {
                         hideOnRangeSelection
                         showIcon
                         dateFormat="dd/mm/yy"
+                        locale="es"
                     />
                     {submitted && (!dates || dates.length !== 2) && (
                         <small className="p-error">Seleccione un rango de fechas</small>
@@ -110,7 +121,7 @@ function ReportPage() {
         },
         initialData: reports,
         validateItem: () => {
-            if (!user?.id) {
+            if (user?.id === null || user?.id === undefined) {
                 toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Debe iniciar sesión para crear reportes', life: 3000 });
                 return false;
             }
@@ -126,13 +137,13 @@ function ReportPage() {
         },
         onSaveItem: async (item, isNew) => {
             if (!isNew) return item;
-            if (!user?.id) throw new Error('Usuario no autenticado');
+            if (user?.id === null || user?.id === undefined) throw new Error('Usuario no autenticado');
             if (!dates || dates.length !== 2) throw new Error('Rango de fechas incompleto');
 
             const [start, end] = dates;
             const saved = await reportAPI.createReport({
                 user_id: user.id,
-                frequency: 'manual',
+                frequency: 'Manual',
                 description: item.description || undefined,
                 period_start: new Date(new Date(start).setUTCHours(0, 0, 0, 0)).toISOString(),
                 period_end: new Date(new Date(end).setUTCHours(23, 59, 59, 0)).toISOString(),

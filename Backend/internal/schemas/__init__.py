@@ -48,9 +48,4 @@ from internal.schemas.report_inventory_item_schema import (
     ReportInventoryItemCreate,
     ReportInventoryItemRead
 )
-from internal.schemas.section_inventory_item_schema import (
-    SectionInventoryItemBase,
-    SectionInventoryItemCreate,
-    SectionInventoryItemRead
-)
 

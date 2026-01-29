@@ -10,18 +10,12 @@ from internal.domain.inventory_item import InventoryItem
 from internal.infrastructure.database.db import get_db
 from internal.schemas import InventoryItemCreate, InventoryMovementCreate
 
-from internal.domain.section_inventory_item import SectionInventoryItem
-
 router = APIRouter(prefix="/inventory-item", tags=["inventory-item"])
 
 @router.post("/")
 def create_inventory_item(inventory_item_data: InventoryItemCreate, db: Session = Depends(get_db)):
-    new_section_inventory_item = SectionInventoryItem(
-        section_id=inventory_item_data.section_id,
-        inventory_item_id=inventory_item_data.id
-    )
     new_inventory_item = InventoryItem(**inventory_item_data.model_dump())
-    db.add(new_inventory_item, new_section_inventory_item)
+    db.add(new_inventory_item)
     db.commit()
     db.refresh(new_inventory_item)
     return new_inventory_item

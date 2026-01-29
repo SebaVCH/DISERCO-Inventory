@@ -8,6 +8,7 @@ import {useEffect, useState} from "react";
 import {ProgressSpinner} from "primereact/progressspinner";
 import {Message} from "primereact/message";
 import sectionAPI from "../services/sectionService.ts";
+import { useQueryClient } from "@tanstack/react-query";
 
 const emptySection: Section = {
     id: 0,
@@ -15,6 +16,7 @@ const emptySection: Section = {
 };
 
 function SectionPage() {
+    const queryClient = useQueryClient();
     const { data, isLoading, isError } = useSection()
     const [sections, setSection] = useState<Section[]>([]);
 
@@ -52,13 +54,17 @@ function SectionPage() {
         validateItem: (section) => section.name.trim() !== '',
         onSaveItem: async (section, isNew) => {
             if (isNew) {
-                return await sectionAPI.createSection({ name: section.name });
+                const created = await sectionAPI.createSection({ name: section.name });
+                await queryClient.invalidateQueries({ queryKey: ['section'] });
+                return created;
             }
             await sectionAPI.updateSection(section.id, { name: section.name });
+            await queryClient.invalidateQueries({ queryKey: ['section'] });
             return { ...section };
         },
         onDeleteItem: async (id) => {
             await sectionAPI.deleteSection(id);
+            await queryClient.invalidateQueries({ queryKey: ['section'] });
         },
     };
 

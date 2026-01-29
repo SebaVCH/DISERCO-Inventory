@@ -189,7 +189,7 @@ function MaintenancePage() {
 
             return (
                 <>
-                    <div className="field">
+                    <div className="field dialog-field">
                         <label htmlFor="maintenance_description" className="font-bold">Descripción general</label>
                         <InputText
                             id="maintenance_description"
@@ -201,9 +201,9 @@ function MaintenancePage() {
                     <div className="grid">
                         {rows.map((row, index) => (
                             <div key={row.key} className="col-12">
-                                <div className="p-3 border-1 surface-border border-round">
-                                    <div className="flex align-items-center justify-content-between mb-2">
-                                        <span className="font-bold">Artículo #{index + 1}</span>
+                                <div className="dialog-section">
+                                    <div className="dialog-section-header">
+                                        <span className="dialog-section-title">Artículo #{index + 1}</span>
                                         {rows.length > 1 && index < rows.length - 1 && (
                                             <Button
                                                 icon="pi pi-times"
@@ -214,7 +214,7 @@ function MaintenancePage() {
                                             />
                                         )}
                                     </div>
-                                    <div className="field">
+                                    <div className="field dialog-field">
                                         <label htmlFor={`inventory_item_id_${row.key}`} className="font-bold">Artículo</label>
                                         <Dropdown
                                             id={`inventory_item_id_${row.key}`}
@@ -227,7 +227,7 @@ function MaintenancePage() {
                                         />
                                         {rowsMissingItem(row) && <small className="p-error">Selecciona un artículo para este mantenimiento.</small>}
                                     </div>
-                                    <div className="field">
+                                    <div className="field dialog-field">
                                         <label htmlFor={`maintenance_desc_${row.key}`} className="font-bold">Descripción del mantenimiento</label>
                                         <InputTextarea
                                             id={`maintenance_desc_${row.key}`}

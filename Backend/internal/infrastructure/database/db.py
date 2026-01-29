@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from internal.domain import Base,section_inventory_item,inventory_item_maintenance,report_inventory_item,inventory_item,inventory_movement,section,report,maintenance,notification_subscription,user
+from internal.domain import Base,inventory_item_maintenance,report_inventory_item,inventory_item,inventory_movement,section,report,maintenance,notification_subscription,user
 
 engine = create_engine('sqlite:///DISERCO-DB')
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)

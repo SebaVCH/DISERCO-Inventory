@@ -112,10 +112,10 @@ function InventoryMovementPage() {
     const hasValidMovements = () => movementRows.some((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
 
     const saveMovements = async () => {
-        if (!user?.id) return;
-        const userId = user.id;
-         const actionableRows = movementRows.filter((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
-         const requests: Promise<any>[] = [];
+        const userId = user?.id;
+        if (userId === null || userId === undefined) return;
+        const actionableRows = movementRows.filter((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
+        const requests: Promise<any>[] = [];
 
         actionableRows.forEach((row) => {
             const payload = { observation: row.observation } as { quantity: number; observation?: string };
@@ -168,9 +168,9 @@ function InventoryMovementPage() {
                     <div className="grid">
                         {movementRows.map((row, index) => (
                             <div key={row.key} className="col-12">
-                                <div className="p-3 border-1 surface-border border-round">
-                                    <div className="flex align-items-center justify-content-between mb-2">
-                                        <span className="font-bold">Movimiento #{index + 1}</span>
+                                <div className="dialog-section">
+                                    <div className="dialog-section-header">
+                                        <span className="dialog-section-title">Movimiento #{index + 1}</span>
                                         {movementRows.length > 1 && index < movementRows.length - 1 && (
                                             <Button
                                                 icon="pi pi-times"
@@ -181,7 +181,7 @@ function InventoryMovementPage() {
                                             />
                                         )}
                                     </div>
-                                    <div className="field">
+                                    <div className="field dialog-field">
                                         <label htmlFor={`inventory_item_id_${row.key}`} className="font-bold">Artículo</label>
                                         <Dropdown
                                             id={`inventory_item_id_${row.key}`}
@@ -194,7 +194,7 @@ function InventoryMovementPage() {
                                         />
                                         {rowsMissingItem(row) && <small className="p-error">Selecciona un artículo para este movimiento.</small>}
                                     </div>
-                                    <div className="field">
+                                    <div className="field dialog-field">
                                         <label htmlFor={`entryQuantity_${row.key}`} className="font-bold">Cantidad de Entrada</label>
                                         <InputNumber
                                             id={`entryQuantity_${row.key}`}
@@ -205,7 +205,7 @@ function InventoryMovementPage() {
                                             maxFractionDigits={2}
                                         />
                                     </div>
-                                    <div className="field">
+                                    <div className="field dialog-field">
                                         <label htmlFor={`exitQuantity_${row.key}`} className="font-bold">Cantidad de Salida</label>
                                         <InputNumber
                                             id={`exitQuantity_${row.key}`}
@@ -216,7 +216,7 @@ function InventoryMovementPage() {
                                             maxFractionDigits={2}
                                         />
                                     </div>
-                                    <div className="field">
+                                    <div className="field dialog-field">
                                         <label htmlFor={`observation_${row.key}`} className="font-bold">Observación</label>
                                         <InputTextarea
                                             id={`observation_${row.key}`}

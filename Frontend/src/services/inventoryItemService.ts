@@ -10,12 +10,12 @@ const inventoryItemAPI = {
         return response.data;
     },
 
-    createItemEntry: async (id: number, data: { quantity: number; observation?: string }, userId: number = 1): Promise<InventoryMovement> => {
+    createItemEntry: async (id: number, data: { quantity: number; observation?: string }, userId: number): Promise<InventoryMovement> => {
         const response = await axiosInstance.post(`${inventoryItemPath}/entry/${id}/user/${userId}`, data);
         return response.data;
     },
 
-    createItemExit: async (id: number, data: { quantity: number; observation?: string }, userId: number = 1): Promise<InventoryMovement> => {
+    createItemExit: async (id: number, data: { quantity: number; observation?: string }, userId: number): Promise<InventoryMovement> => {
         const response = await axiosInstance.post(`${inventoryItemPath}/exit/${id}/user/${userId}`, data);
         return response.data;
     },

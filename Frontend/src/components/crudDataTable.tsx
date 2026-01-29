@@ -310,11 +310,14 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 breakpoints={{ '960px': '75vw', '641px': '90vw' }}
                 header={`Detalles del ${entityName}`}
                 modal
-                className="p-fluid"
+                className="app-dialog"
+                contentClassName="dialog-content"
                 footer={itemDialogFooter}
                 onHide={hideDialog}
             >
-                {dialogContent(item, submitted, onInputChange, onInputTextAreaChange, onInputNumberChange)}
+                <div className="dialog-surface dialog-grid">
+                    {dialogContent(item, submitted, onInputChange, onInputTextAreaChange, onInputNumberChange)}
+                </div>
             </Dialog>
 
             <Dialog
@@ -323,16 +326,19 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 breakpoints={{ '960px': '75vw', '641px': '90vw' }}
                 header="Confirmar"
                 modal
+                className="app-dialog"
                 footer={deleteItemDialogFooter}
                 onHide={hideDeleteItemDialog}
             >
-                <div className="confirmation-content">
-                    <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                    {item && (
-                        <span>
-                            ¿Está seguro de que desea eliminar <b>{getItemDisplayName(item)}</b>?
-                        </span>
-                    )}
+                <div className="dialog-surface">
+                    <div className="confirmation-content">
+                        <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
+                        {item && (
+                            <span>
+                                ¿Está seguro de que desea eliminar <b>{getItemDisplayName(item)}</b>?
+                            </span>
+                        )}
+                    </div>
                 </div>
             </Dialog>
         </div>
