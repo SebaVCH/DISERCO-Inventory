@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import List, Any
 
 from openpyxl import load_workbook, Workbook
-from openpyxl.chart import PieChart, Reference
-from openpyxl.styles import Side, Border
+from openpyxl.styles import Side, Border, Font, Alignment
 from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct, case
 
@@ -30,28 +29,24 @@ def export_report_to_excel(report: Report, items_report: List[ReportInventoryIte
         bottom=side_style
     )
     replace_general_summary(report, workbook, db, sections, cell_border)
-    generate_total_inventory_detail(items_report, report, workbook, cell_border, db)
+    generate_total_inventory_detail(report, workbook, cell_border, db)
 
     buffer = io.BytesIO()
     workbook.save(buffer)
     buffer.seek(0)
     return buffer
 
-def generate_total_inventory_detail(items_report: list[ReportInventoryItem], report: Report, workbook: Workbook, cell_border: Border, db: Session):
+def generate_total_inventory_detail(report: Report, workbook: Workbook, cell_border: Border, db: Session):
 
     sheet_detail = workbook["Inventario Detallado"]
     sheet_detail["C5"] = f"{report.period_end}"
 
-    items_by_id: dict[int, ReportInventoryItem] = {}
-    for report_item in items_report:
-        inventory_item = report_item.inventory_item
-        if inventory_item:
-            items_by_id[inventory_item.id] = report_item
+    inventory_items = db.query(InventoryItem).outerjoin(InventoryItem.section).filter(InventoryItem.is_deleted.is_(False)).all()
 
-    if not items_by_id:
+    if not inventory_items:
         return
 
-    item_ids = list(items_by_id.keys())
+    item_ids = [item.id for item in inventory_items]
 
     movements = (
         db.query(InventoryMovement)
@@ -96,11 +91,9 @@ def generate_total_inventory_detail(items_report: list[ReportInventoryItem], rep
             entry["exits"] += mv.quantity
 
     start_row = 9
-    for row_offset, item_id in enumerate(sorted(items_by_id.keys())):
-        report_item = items_by_id[item_id]
-        item = report_item.inventory_item
-        agg = aggregates.get(item_id, {"entries": 0, "exits": 0, "observations": set(), "responsables": set()})
-        outside = adjustments_after.get(item_id, {"entries": 0, "exits": 0})
+    for row_offset, item in enumerate(sorted(inventory_items, key=lambda i: i.id)):
+        agg = aggregates.get(item.id, {"entries": 0, "exits": 0, "observations": set(), "responsables": set()})
+        outside = adjustments_after.get(item.id, {"entries": 0, "exits": 0})
 
         section = item.section if item else None
         section_name = section.name if section else "Sin Sección"
@@ -108,16 +101,19 @@ def generate_total_inventory_detail(items_report: list[ReportInventoryItem], rep
         calculated_stock = base_stock - outside["entries"] + outside["exits"]
 
         row = start_row + row_offset
+        item_name = f"{item.name} ({item.description})" if item.description else item.name
         sheet_detail.cell(row=row, column=1, value=item.id).border = cell_border
-        sheet_detail.cell(row=row, column=2, value=item.name).border = cell_border
+        sheet_detail.cell(row=row, column=2, value=item_name).border = cell_border
         sheet_detail.cell(row=row, column=3, value=section_name).border = cell_border
         sheet_detail.cell(row=row, column=4, value=agg["entries"]).border = cell_border
         sheet_detail.cell(row=row, column=5, value=agg["exits"]).border = cell_border
         sheet_detail.cell(row=row, column=6, value=calculated_stock).border = cell_border
+        sheet_detail.cell(row=row, column=6, value=calculated_stock).font = Font(color="FF0000",bold=True)
+        sheet_detail.cell(row=row, column=6, value=calculated_stock).alignment = Alignment(horizontal="center", vertical="center")
         sheet_detail.cell(row=row, column=7, value="; ".join(sorted(agg["observations"])) if agg["observations"] else None).border = cell_border
         sheet_detail.cell(row=row, column=8, value=", ".join(sorted(agg["responsables"])) if agg["responsables"] else None).border = cell_border
 
-    last_row = start_row + len(items_by_id) - 1
+    last_row = start_row + len(inventory_items) - 1
     full_range = f"A8:H{last_row}"
     sheet_detail.auto_filter.ref = full_range
 

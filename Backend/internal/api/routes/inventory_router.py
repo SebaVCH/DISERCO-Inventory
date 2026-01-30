@@ -44,7 +44,7 @@ def get_total_inventory(status: str,db: Session = Depends(get_db)):
         critical_inventory = db.query(InventoryItem).options(joinedload(InventoryItem.section)).filter(
             (InventoryItem.has_critical_stock == True)
             &
-            (InventoryItem.current_stock <= InventoryItem.critical_stock_quantity + ((InventoryItem.total_exits + InventoryItem.total_entries) * 0.1 ))
+            (InventoryItem.current_stock <= InventoryItem.critical_stock_quantity + 30)
             &
             (InventoryItem.is_deleted == False)
         ).all()

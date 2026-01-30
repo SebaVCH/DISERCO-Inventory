@@ -18,6 +18,7 @@ from internal.schemas import ReportCreate
 from internal.utils.export_report import export_report_to_excel
 
 from internal.schemas.report_schema import ReportRead, ReportCreate
+from internal.utils.send_mail import send_mail
 
 router = APIRouter(prefix="/report", tags=["report"])
 
@@ -167,7 +168,8 @@ def validate_existing_report():
         )
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=validate_existing_report, trigger=CronTrigger(hour=10, minute=0, day='*'), id="validate_reports")
+scheduler.add_job(func=validate_existing_report, trigger=CronTrigger(hour=8, minute=30, day='*'), id="validate_reports", misfire_grace_time=16200)
+scheduler.add_job(func=send_mail, trigger=CronTrigger(hour=8, minute=30, day_of_week=1), id="send_important_mails", misfire_grace_time=16200)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

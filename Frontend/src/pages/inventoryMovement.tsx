@@ -186,7 +186,10 @@ function InventoryMovementPage() {
                                         <Dropdown
                                             id={`inventory_item_id_${row.key}`}
                                             value={row.inventory_item_id || null}
-                                            options={filteredInventoryItems.map((item) => ({ label: item.name, value: item.id }))}
+                                            options={filteredInventoryItems.map((item) => ({
+                                                label: item.description ? `${item.name} ${item.description}` : item.name,
+                                                value: item.id,
+                                            }))}
                                             onChange={(e: DropdownChangeEvent) => handleItemChange(row.key, Number(e.value))}
                                             filter
                                             placeholder="Busca y selecciona un artículo"
