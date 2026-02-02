@@ -11,10 +11,15 @@ import './auth.css';
 function Auth() {
     const navigate = useNavigate();
     const { setSession } = useUserStore();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+    const [loginError, setLoginError] = useState<string | null>(null);
+    const [registerEmail, setRegisterEmail] = useState('');
+    const [registerPassword, setRegisterPassword] = useState('');
     const [fullName, setFullName] = useState('');
-    const [error, setError] = useState<string | null>(null);
+    const [registerError, setRegisterError] = useState<string | null>(null);
+
+    const isValidEmail = (value: string) => /[^@\s]+@[^@\s]+\.[^@\s]+/.test(value);
 
     const fetchProfileAndSetSession = async (token: string) => {
         localStorage.setItem('token', token);
@@ -23,31 +28,49 @@ function Auth() {
     }
 
     const loginMutation = useMutation({
-        mutationFn: () => userAPI.login({ email, password }),
+        mutationFn: () => userAPI.login({ email: loginEmail, password: loginPassword }),
         onSuccess: async (data) => {
-            setError(null);
+            setLoginError(null);
             await fetchProfileAndSetSession(data.access_token);
             navigate('/inventory');
         },
         onError: (err: any) => {
-            setError(err?.response?.data?.detail ?? 'Error al iniciar sesión');
+            setLoginError(err?.response?.data?.detail ?? 'Error al iniciar sesión');
         }
     });
 
     const registerMutation = useMutation({
-        mutationFn: () => userAPI.register({ email, password, full_name: fullName }),
+        mutationFn: () => userAPI.register({ email: registerEmail, password: registerPassword, full_name: fullName }),
         onSuccess: async (data) => {
-            setError(null);
+            setRegisterError(null);
             await fetchProfileAndSetSession(data.access_token);
             navigate('/inventory');
         },
         onError: (err: any) => {
-            setError(err?.response?.data?.detail ?? 'Error al registrar usuario');
+            setRegisterError(err?.response?.data?.detail ?? 'Error al registrar usuario');
         }
     });
 
-    const disabledLogin = !email || !password || loginMutation.isPending;
-    const disabledRegister = !email || !password || !fullName || registerMutation.isPending;
+    const disabledLogin = !loginEmail || !loginPassword || loginMutation.isPending;
+    const disabledRegister = !registerEmail || !registerPassword || !fullName || registerMutation.isPending;
+
+    const handleLogin = () => {
+        if (!isValidEmail(loginEmail)) {
+            setLoginError('Ingresa un correo válido');
+            return;
+        }
+        setLoginError(null);
+        loginMutation.mutate();
+    };
+
+    const handleRegister = () => {
+        if (!isValidEmail(registerEmail)) {
+            setRegisterError('Ingresa un correo válido');
+            return;
+        }
+        setRegisterError(null);
+        registerMutation.mutate();
+    };
 
     return (
         <div className="auth-layout">
@@ -64,14 +87,14 @@ function Auth() {
                         <p className="auth-column-title">Iniciar sesión</p>
                         <div className="auth-field">
                             <label htmlFor="email">Correo</label>
-                            <InputText id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@empresa.com" />
+                            <InputText id="email" type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="correo@empresa.com" />
                         </div>
                         <div className="auth-field">
                             <label htmlFor="password">Contraseña</label>
-                            <InputText id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                            <InputText id="password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="••••••••" />
                         </div>
-                        <Button label="Iniciar sesión" icon="pi pi-sign-in" className="auth-button" loading={loginMutation.isPending} disabled={disabledLogin} onClick={() => loginMutation.mutate()}></Button>
-                        {error && <small className="auth-error">{error}</small>}
+                        <Button label="Iniciar sesión" icon="pi pi-sign-in" className="auth-button" loading={loginMutation.isPending} disabled={disabledLogin} onClick={handleLogin}></Button>
+                        {loginError && <small className="auth-error">{loginError}</small>}
                     </div>
                     <div className="auth-divider">
                         <Divider layout="vertical" className="hidden md:flex">
@@ -89,13 +112,14 @@ function Auth() {
                         </div>
                         <div className="auth-field">
                             <label htmlFor="emailRegister">Correo</label>
-                            <InputText id="emailRegister" type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@empresa.com" />
+                            <InputText id="emailRegister" type="email" value={registerEmail} onChange={(e) => setRegisterEmail(e.target.value)} placeholder="correo@empresa.com" />
                         </div>
                         <div className="auth-field">
                             <label htmlFor="passwordRegister">Contraseña</label>
-                            <InputText id="passwordRegister" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                            <InputText id="passwordRegister" type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} placeholder="••••••••" />
                         </div>
-                        <Button label="Registrarse" icon="pi pi-user-plus" severity="success" className="auth-button" loading={registerMutation.isPending} disabled={disabledRegister} onClick={() => registerMutation.mutate()}></Button>
+                        <Button label="Registrarse" icon="pi pi-user-plus" severity="success" className="auth-button" loading={registerMutation.isPending} disabled={disabledRegister} onClick={handleRegister}></Button>
+                        {registerError && <small className="auth-error">{registerError}</small>}
                     </div>
                 </div>
             </div>

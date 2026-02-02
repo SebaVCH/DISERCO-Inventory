@@ -179,7 +179,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     };
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement>, name: string) => {
-        const val = e.target?.value ?? '';
+        const val = e.target?.value === undefined ? '' : e.target.value;
         const _item = { ...item, [name]: val } as T;
         setItem(_item);
     };
@@ -290,7 +290,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     dataKey="id"
                     paginator
                     rows={10}
-                    rowsPerPageOptions={[5, 10, 25]}
+                    rowsPerPageOptions={[10, 20, 35]}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     currentPageReportTemplate={`Mostrando {first} a {last} de {totalRecords} ${entityNamePlural.toLowerCase()}`}
                     globalFilter={globalFilter}

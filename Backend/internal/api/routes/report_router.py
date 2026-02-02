@@ -1,4 +1,3 @@
-import calendar
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -29,21 +28,15 @@ def get_report(db: Session = Depends(get_db)):
 
 @router.post("/")
 def create_report(report_data: ReportCreate, db: Session = Depends(get_db)):
-    new_report = create_base_report(db, report_data, raise_if_empty=True)
-    if not new_report:
-        raise HTTPException(status_code=404, detail="No hay movimientos en el periodo seleccionado")
+    new_report = create_base_report(db, report_data)
     return new_report
 
-def create_base_report(db: Session, report_data: ReportCreate, raise_if_empty: bool = True) -> Report | None:
+def create_base_report(db: Session, report_data: ReportCreate) -> Report | None:
     try:
         initial_date = report_data.period_start
         final_date = report_data.period_end
 
         all_movements = db.query(InventoryMovement).filter(InventoryMovement.created_at >= initial_date, InventoryMovement.created_at <= final_date).options(joinedload(InventoryMovement.inventory_item)).all()
-        if not all_movements:
-            if raise_if_empty:
-                raise HTTPException(status_code=404, detail="No hay movimientos en el periodo seleccionado")
-            return None
 
         new_report = Report(
             description=report_data.description,
@@ -98,10 +91,8 @@ def create_base_report(db: Session, report_data: ReportCreate, raise_if_empty: b
 def get_report_by_id(report_id: int, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.id == report_id).options(joinedload(Report.user)).first()
     items_in_report = db.query(ReportInventoryItem).filter(ReportInventoryItem.report_id == report_id).options(joinedload(ReportInventoryItem.inventory_item).joinedload(InventoryItem.section)).all()
-
     if not report:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")
-
     try:
         buffer = export_report_to_excel(report, items_in_report, db)
     except FileNotFoundError:
@@ -119,8 +110,6 @@ def delete_report(report_id: int, db: Session = Depends(get_db)):
     if not report:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")
     item_report = db.query(ReportInventoryItem).filter(ReportInventoryItem.report_id == report_id).all()
-    if not item_report:
-        raise HTTPException(status_code=404, detail="No hay movimientos asociados al reporte")
     db.delete(report)
     for item in item_report:
         db.delete(item)
@@ -148,8 +137,7 @@ def validate_existing_report():
                 period_start=monday_last_week,
                 period_end=sunday_last_week,
                 generated_at=datetime.now(ZoneInfo("America/Santiago")),
-            ),
-            raise_if_empty=False,
+            )
         )
 
     report_last_month = db.query(Report).filter(Report.period_start == first_day_last_month, Report.period_end == last_day_last_month).first()
@@ -163,8 +151,7 @@ def validate_existing_report():
                 period_start=first_day_last_month,
                 period_end=last_day_last_month,
                 generated_at=datetime.now(ZoneInfo("America/Santiago")),
-            ),
-            raise_if_empty=False,
+            )
         )
 
 scheduler = BackgroundScheduler()

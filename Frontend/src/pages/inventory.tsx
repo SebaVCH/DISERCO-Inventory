@@ -15,6 +15,7 @@ import inventoryItemAPI from "../services/inventoryItemService.ts";
 import {Dropdown, type DropdownChangeEvent} from "primereact/dropdown";
 import {useSection} from "../hooks/useSection.ts";
 import type { Section } from "../types/section";
+import { queryClient } from "../lib/queryClient.ts";
 
 const emptyInventoryItem: InventoryItem = {
     id: 0,
@@ -52,6 +53,11 @@ function Inventory() {
     const criticalStockOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
     const { data: sections = [] } = useSection();
     const sectionOptions = [{ label: 'Sin sección', value: null }, ...(sections?.map?.((section: Section) => ({ label: section.name, value: section.id })) || [])];
+
+    const normalizeSectionId = (value: number | string | null | undefined) => {
+        if (value === null || value === undefined || value === '') return null;
+        return typeof value === 'string' ? Number(value) : value;
+    };
 
     useEffect(() => {
         if (data) {
@@ -141,12 +147,17 @@ function Inventory() {
                     <label htmlFor="section_id" className="font-bold">Sección</label>
                     <Dropdown
                         id="section_id"
-                        value={item.section_id ?? null}
+                        value={normalizeSectionId(item.section_id)}
                         options={sectionOptions}
                         optionLabel="label"
                         optionValue="value"
                         placeholder="Seleccione una sección (opcional)"
-                        onChange={(e: DropdownChangeEvent) => onInputChange({ target: { value: e.value } } as unknown as React.ChangeEvent<HTMLInputElement>, 'section_id')}
+                        onChange={(e: DropdownChangeEvent) =>
+                            onInputChange(
+                                { target: { value: normalizeSectionId(e.value) } } as unknown as React.ChangeEvent<HTMLInputElement>,
+                                'section_id'
+                            )
+                        }
                     />
                 </div>
             </div>
@@ -160,13 +171,14 @@ function Inventory() {
             await refetch();
         },
         onSaveItem: async (item, isNew) => {
+            const normalizedSectionId = normalizeSectionId(item.section_id);
             const payload = {
                 name: item.name,
                 description: item.description,
                 has_critical_stock: item.has_critical_stock,
                 critical_stock_quantity: item.critical_stock_quantity,
                 comments: item.comments,
-                section_id: item.section_id ?? null,
+                section_id: normalizedSectionId,
             };
 
             if (isNew) {
@@ -176,6 +188,7 @@ function Inventory() {
                     ...created,
                     section_name: section?.name || "Sin sección",
                 };
+                await queryClient.invalidateQueries({ queryKey: ['inventory'] });
                 await refetch();
                 return itemWithSectionName;
             }
@@ -186,6 +199,7 @@ function Inventory() {
                 ...item,
                 section_name: section?.name || "Sin sección",
             };
+            await queryClient.invalidateQueries({ queryKey: ['inventory'] });
             await refetch();
             return updated;
         },
@@ -225,4 +239,3 @@ function Inventory() {
 }
 
 export default Inventory;
-

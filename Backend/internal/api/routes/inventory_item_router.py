@@ -56,6 +56,8 @@ def create_inventory_item_exit(inventory_item_movement_data: InventoryMovementCr
             created_at=datetime.now(ZoneInfo("America/Santiago")),
         )
         db.add(new_inventory_item_exit)
+        if inventory_item_movement_data.quantity > db.query(InventoryItem).filter(InventoryItem.id == item_id).first().current_stock:
+            raise HTTPException(status_code=400, detail="No hay suficiente stock para realizar la salida")
         db.query(InventoryItem).filter(InventoryItem.id == item_id).update(
             {"current_stock": InventoryItem.current_stock - inventory_item_movement_data.quantity,
              "total_exits": InventoryItem.total_exits + inventory_item_movement_data.quantity}

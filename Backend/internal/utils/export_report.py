@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Any
 
 from openpyxl import load_workbook, Workbook
-from openpyxl.styles import Side, Border, Font, Alignment
+from openpyxl.styles import Side, Border, Font, Alignment, PatternFill
 from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct, case
 
@@ -41,7 +41,7 @@ def generate_total_inventory_detail(report: Report, workbook: Workbook, cell_bor
     sheet_detail = workbook["Inventario Detallado"]
     sheet_detail["C5"] = f"{report.period_end}"
 
-    inventory_items = db.query(InventoryItem).outerjoin(InventoryItem.section).filter(InventoryItem.is_deleted.is_(False)).all()
+    inventory_items = db.query(InventoryItem).outerjoin(InventoryItem.section).all()
 
     if not inventory_items:
         return
@@ -108,10 +108,17 @@ def generate_total_inventory_detail(report: Report, workbook: Workbook, cell_bor
         sheet_detail.cell(row=row, column=4, value=agg["entries"]).border = cell_border
         sheet_detail.cell(row=row, column=5, value=agg["exits"]).border = cell_border
         sheet_detail.cell(row=row, column=6, value=calculated_stock).border = cell_border
-        sheet_detail.cell(row=row, column=6, value=calculated_stock).font = Font(color="FF0000",bold=True)
+        if not item.is_deleted:
+            sheet_detail.cell(row=row, column=6, value=calculated_stock).font = Font(color="FF0000", bold=True)
+        else:
+            sheet_detail.cell(row=row, column=6, value=calculated_stock).font = Font(color="000000",bold=True)
         sheet_detail.cell(row=row, column=6, value=calculated_stock).alignment = Alignment(horizontal="center", vertical="center")
         sheet_detail.cell(row=row, column=7, value="; ".join(sorted(agg["observations"])) if agg["observations"] else None).border = cell_border
         sheet_detail.cell(row=row, column=8, value=", ".join(sorted(agg["responsables"])) if agg["responsables"] else None).border = cell_border
+
+        if item.is_deleted:
+            for col in range(1, 9):
+                sheet_detail.cell(row=row, column=col).fill = PatternFill(fill_type="solid", start_color="FF0000")
 
     last_row = start_row + len(inventory_items) - 1
     full_range = f"A8:H{last_row}"

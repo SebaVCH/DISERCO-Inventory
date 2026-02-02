@@ -12,7 +12,7 @@ from internal.infrastructure.database.db import get_db
 from internal.utils.setup_env import JWTSecret, JWTAlgorithm
 
 def create_token(user):
-    expiration_time = datetime.now(ZoneInfo("America/Santiago")) + timedelta(hours=1)
+    expiration_time = datetime.now(ZoneInfo("America/Santiago")) + timedelta(hours=24)
     payload = {
         "email": user.email,
         "id": user.id,
