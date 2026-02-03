@@ -1,0 +1,180 @@
+:root {
+  --brand-red: #ad0000;
+  --brand-red-dark: #8b0000;
+  --brand-white: #ffffff;
+  --brand-black: #000000;
+  --text-primary: #1f2937;
+  --text-muted: #6b7280;
+  --border-light: #e5e7eb;
+  --row-hover: #fef2f2;
+  --row-selected: #fee2e2;
+}
+
+.card {
+  background-color: var(--brand-white);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+}
+
+.p-toolbar {
+  background: var(--brand-white);
+  border: none;
+  padding: 0 0 1.25rem 0;
+}
+
+.p-toolbar .p-button {
+  background-color: var(--brand-red);
+  border-color: var(--brand-red);
+  font-weight: 600;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.p-toolbar .p-button:enabled:hover,
+.p-toolbar .p-button:enabled:active {
+  background-color: var(--brand-red-dark);
+  border-color: var(--brand-red-dark);
+  box-shadow: 0 6px 16px rgba(173, 0, 0, 0.25);
+}
+
+.p-toolbar .p-button:focus {
+  box-shadow: 0 0 0 2px var(--brand-white), 0 0 0 4px rgba(173, 0, 0, 0.35);
+}
+
+.p-datatable {
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.p-datatable .p-datatable-header {
+  background: var(--brand-white);
+  border-bottom: 2px solid var(--brand-red);
+  padding: 1rem 1.25rem;
+}
+
+.p-datatable .p-datatable-header h4 {
+  color: var(--brand-red);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.p-datatable .p-datatable-header .p-inputtext {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem 0.6rem 2.5rem;
+  min-width: 240px;
+}
+
+.p-datatable .p-datatable-header .p-icon-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 240px;
+}
+
+.p-datatable .p-datatable-header .p-icon-field > .p-input-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.p-datatable .p-datatable-header .p-icon-field > .p-inputtext {
+  padding-left: 2.5rem;
+  width: 100%;
+}
+
+.p-datatable .p-datatable-header .p-inputtext:enabled:focus {
+  border-color: var(--brand-red);
+  box-shadow: 0 0 0 1px var(--brand-red);
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background-color: var(--brand-red);
+  color: var(--brand-white);
+  border: none;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 0.95rem 1rem;
+}
+
+.p-datatable .p-datatable-thead > tr > th.p-sortable-column:hover {
+  background-color: var(--brand-red-dark);
+}
+
+.p-datatable .p-datatable-thead > tr > th.p-highlight {
+  background-color: var(--brand-red-dark);
+}
+
+.p-datatable .p-datatable-thead > tr > th .p-sortable-column-icon {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.p-datatable .p-datatable-tbody > tr {
+  background-color: var(--brand-white);
+  color: var(--text-primary);
+  transition: background-color 0.15s ease;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  border-bottom: 1px solid var(--border-light);
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background-color: var(--row-hover);
+}
+
+.p-datatable .p-datatable-tbody > tr.p-highlight {
+  background-color: var(--row-selected);
+}
+
+.p-datatable .p-datatable-emptymessage td {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.p-datatable .p-button.p-button-rounded {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.p-datatable .p-button.p-button-outlined {
+  background: transparent;
+  border: 1.5px solid var(--brand-red);
+  color: var(--brand-red);
+}
+
+.p-datatable .p-button.p-button-outlined:enabled:hover {
+  background: var(--brand-red);
+  border-color: var(--brand-red);
+  color: var(--brand-white);
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 1rem;
+  }
+
+  .p-datatable .p-datatable-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .p-datatable .p-datatable-header .p-inputtext {
+    min-width: 100%;
+  }
+
+  .p-datatable .p-datatable-header .p-icon-field {
+    width: 100%;
+  }
+}

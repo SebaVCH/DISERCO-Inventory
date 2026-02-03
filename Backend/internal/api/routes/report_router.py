@@ -154,14 +154,19 @@ def validate_existing_report():
             )
         )
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=validate_existing_report, trigger=CronTrigger(hour=8, minute=30, day='*'), id="validate_reports", misfire_grace_time=16200)
-scheduler.add_job(func=send_mail, trigger=CronTrigger(hour=8, minute=30, day_of_week=1), id="send_important_mails", misfire_grace_time=16200)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
+    scheduler = BackgroundScheduler(timezone=ZoneInfo("America/Santiago"))
+    scheduler.add_job(func=validate_existing_report, trigger=CronTrigger(hour=8, minute=30, day='*'), id="validate_reports", misfire_grace_time=16200)
+    scheduler.add_job(func=send_mail, trigger=CronTrigger(hour=8, minute=30, day_of_week='tue'), id="send_important_mails", misfire_grace_time=16200)
     validate_existing_report()
+
+    # now = datetime.now(ZoneInfo("America/Santiago"))
+    # target_today = now.replace(hour=8, minute=30, second=0, microsecond=0)
+    # if now.weekday() == 1 and target_today < now < target_today.replace(hour=13):
+    #     send_mail()
+
     scheduler.start()
     yield
     scheduler.shutdown()

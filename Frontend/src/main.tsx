@@ -6,6 +6,7 @@ import { router } from "./router"
 import { queryClient } from './lib/queryClient'
 
 import './styles/dialogs.css'
+import './styles/crudDataTable.css'
 import './index.css'
 import 'primeicons/primeicons.css'
 
