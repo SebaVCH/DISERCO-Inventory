@@ -256,7 +256,6 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
 
     const itemDialogFooter = (
         <React.Fragment>
-            <Button label="Cancelar" icon="pi pi-times" outlined onClick={hideDialog} />
             <Button label="Guardar" icon="pi pi-check" onClick={saveItem} />
         </React.Fragment>
     );
@@ -289,8 +288,8 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     }}
                     dataKey="id"
                     paginator
-                    rows={10}
-                    rowsPerPageOptions={[10, 20, 35]}
+                    rows={5}
+                    rowsPerPageOptions={[5, 10, 20, 30]}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     currentPageReportTemplate={`Mostrando {first} a {last} de {totalRecords} ${entityNamePlural.toLowerCase()}`}
                     globalFilter={globalFilter}

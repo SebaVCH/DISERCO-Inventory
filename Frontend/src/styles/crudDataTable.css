@@ -161,6 +161,45 @@
   color: var(--brand-white);
 }
 
+.p-datatable .p-paginator {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--brand-red);
+  border-top: 1px solid var(--border-light);
+}
+
+.p-datatable .p-paginator .p-paginator-pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.p-datatable .p-paginator .p-paginator-element {
+  min-width: 2.25rem;
+  justify-content: center;
+}
+
+.p-datatable .p-paginator .p-paginator-rpp-options {
+  order: 1;
+  margin-left: auto;
+  min-width: 8rem;
+}
+
+.p-datatable .p-paginator .p-paginator-current {
+  order: 3;
+  flex: 1 1 100%;
+  margin-top: 0.25rem;
+  color: var(--brand-white);
+  font-size: 0.95rem;
+}
+
+.p-datatable .p-dropdown {
+  color: var(--brand-white);
+}
+
 @media (max-width: 768px) {
   .card {
     padding: 1rem;
@@ -177,4 +216,378 @@
   .p-datatable .p-datatable-header .p-icon-field {
     width: 100%;
   }
+
+  .p-datatable .p-paginator {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .p-datatable .p-paginator .p-paginator-rpp-options {
+    width: 100%;
+  }
 }
+
+.app-dialog .p-dialog {
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  border: 2px solid var(--border-light);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--brand-white);
+}
+
+.app-dialog .p-dialog-header {
+  background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+  border-bottom: 3px solid var(--brand-red-dark);
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px 14px 0 0;
+}
+
+.app-dialog .p-dialog-header .p-dialog-title {
+  color: var(--brand-white);
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.app-dialog .p-dialog-header .p-dialog-header-icon {
+  color: var(--brand-white);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.app-dialog .p-dialog-header .p-dialog-header-icon:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--brand-white);
+}
+
+.app-dialog .p-dialog-content {
+  padding: 1.5rem;
+  background: linear-gradient(145deg, #fafafa 0%, var(--brand-white) 40%);
+  flex: 1 1 auto;
+  max-height: calc(90vh - 180px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-left: 2px solid var(--border-light);
+  border-right: 2px solid var(--border-light);
+}
+
+.app-dialog .p-dialog-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-dialog .p-dialog-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.app-dialog .p-dialog-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.app-dialog .p-dialog-content::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-red);
+}
+
+.app-dialog .p-dialog-footer {
+  padding: 1.25rem 1.5rem;
+  background: var(--brand-white);
+  border: 2px solid var(--border-light);
+  border-radius: 0 0 14px 14px;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.dialog-surface {
+  background: var(--brand-white);
+  border: 2px solid var(--border-light);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.dialog-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .dialog-grid.two-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dialog-section {
+  border: 2px solid var(--border-light);
+  background: var(--brand-white);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.dialog-section:hover {
+  border-color: rgba(173, 0, 0, 0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dialog-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border-light);
+}
+
+.dialog-section-title {
+  font-weight: 700;
+  color: var(--brand-red);
+  font-size: 1.05rem;
+}
+
+.dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.dialog-field label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.app-dialog .p-inputtext,
+.app-dialog .p-inputtextarea,
+.app-dialog .p-dropdown,
+.app-dialog .p-inputnumber-input,
+.app-dialog .p-calendar input {
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #d1d5db;
+  padding: 0.7rem 0.85rem;
+  background-color: var(--brand-white);
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.app-dialog .p-inputtextarea {
+  padding: 0.7rem 0.85rem;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.app-dialog .p-dropdown .p-inputtext {
+  padding: 0.7rem 0.85rem;
+}
+
+.app-dialog .p-inputtext:focus,
+.app-dialog .p-inputtextarea:focus,
+.app-dialog .p-dropdown.p-focus,
+.app-dialog .p-inputnumber-input:focus,
+.app-dialog .p-calendar input:focus {
+  border-color: var(--brand-red);
+  box-shadow: 0 0 0 3px rgba(173, 0, 0, 0.12);
+  outline: none;
+}
+
+.app-dialog .p-inputtext:hover,
+.app-dialog .p-inputtextarea:hover,
+.app-dialog .p-dropdown:not(.p-disabled):hover,
+.app-dialog .p-inputnumber-input:hover,
+.app-dialog .p-calendar input:hover {
+  border-color: var(--brand-red);
+}
+
+.app-dialog .p-selectbutton {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.app-dialog .p-selectbutton .p-button {
+  border-radius: 10px;
+  border: 2px solid #d1d5db;
+  background: #f9fafb;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.app-dialog .p-selectbutton .p-button:not(.p-highlight):hover {
+  background: #eef2ff;
+  border-color: var(--brand-red);
+  color: var(--brand-red);
+}
+
+.app-dialog .p-selectbutton .p-button.p-highlight {
+  background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
+  border-color: var(--brand-red-dark);
+  color: var(--brand-white);
+  box-shadow: 0 8px 20px rgba(173, 0, 0, 0.25);
+}
+
+
+.app-dialog .p-button {
+  border-radius: 10px;
+  padding: 0.7rem 1.3rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.app-dialog .p-dialog-footer .p-button {
+  min-width: 7rem;
+}
+
+.app-dialog .p-button.p-button-text {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.app-dialog .p-button.p-button-text:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
+}
+
+.app-dialog .p-button:not(.p-button-text) {
+  background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
+  border-color: var(--brand-red);
+  color: var(--brand-white);
+  box-shadow: 0 4px 12px rgba(173, 0, 0, 0.2);
+}
+
+.app-dialog .p-button:not(.p-button-text):hover {
+  background: linear-gradient(135deg, var(--brand-red-dark), #6b0000);
+  box-shadow: 0 6px 18px rgba(173, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.app-dialog .p-button:not(.p-button-text):active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(173, 0, 0, 0.2);
+}
+
+.dialog-helper {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.critical-stock-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.critical-stock-toggle .p-button {
+  flex: 1;
+  border-radius: 10px;
+  border: 2px solid #d1d5db !important;
+  background: #f9fafb !important;
+  color: var(--text-primary) !important;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.critical-stock-toggle .p-button:hover {
+  border-color: var(--brand-red) !important;
+  background: #eef2ff !important;
+}
+
+.critical-stock-toggle .p-button.p-highlight {
+  background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark)) !important;
+  border: 2px solid var(--brand-red-dark) !important;
+  color: var(--brand-white) !important;
+  box-shadow: 0 6px 16px rgba(173, 0, 0, 0.3) !important;
+  font-weight: 700 !important;
+  transform: scale(1.02);
+}
+
+.app-dialog .p-dropdown {
+  position: relative;
+}
+
+.p-dropdown-panel {
+  background: var(--brand-white);
+  border: 2px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  z-index: 1300;
+  margin-top: 0.25rem;
+}
+
+.p-dropdown-panel .p-dropdown-items {
+  padding: 0.5rem;
+}
+
+.p-dropdown-panel .p-dropdown-item {
+  border-radius: 10px;
+  margin: 2px 0;
+  padding: 0.65rem 0.85rem;
+  transition: all 0.15s ease;
+}
+
+.p-dropdown-panel .p-dropdown-item:hover {
+  background: var(--row-hover);
+}
+
+.p-dropdown-panel .p-dropdown-item.p-highlight {
+  background: linear-gradient(135deg, rgba(173, 0, 0, 0.1), rgba(173, 0, 0, 0.15));
+  color: var(--brand-red-dark);
+  font-weight: 600;
+}
+
+.p-dropdown-panel .p-dropdown-item.p-focus {
+  box-shadow: inset 0 0 0 2px rgba(173, 0, 0, 0.2);
+}
+
+.app-dialog .p-datepicker {
+  border: 2px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+.app-dialog .p-datepicker .p-datepicker-header {
+  background: var(--brand-red);
+  color: var(--brand-white);
+  border-radius: 10px 10px 0 0;
+}
+
+.app-dialog .p-datepicker table td > span {
+  border-radius: 8px;
+}
+
+.app-dialog .p-datepicker table td > span.p-highlight {
+  background: var(--brand-red);
+  color: var(--brand-white);
+}
+
+@media (max-width: 768px) {
+  .app-dialog .p-dialog {
+    max-width: 95vw;
+    margin: 1rem;
+  }
+
+  .app-dialog .p-dialog-header,
+  .app-dialog .p-dialog-content,
+  .app-dialog .p-dialog-footer {
+    padding: 1rem;
+  }
+
+  .dialog-grid.two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-surface {
+    padding: 1rem;
+  }
+}
+
