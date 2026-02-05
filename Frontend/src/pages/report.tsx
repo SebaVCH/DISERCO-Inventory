@@ -91,7 +91,7 @@ function ReportPage() {
                     <label>Frecuencia</label>
                     <InputText value="Manual" disabled readOnly />
                 </div>
-                <div className="flex flex-column gap-2">
+                <div className="flex flex-column gap-2 report-date-range">
                     <label>Rango de fechas</label>
                     <Calendar
                         value={dates as any}
@@ -102,6 +102,7 @@ function ReportPage() {
                         showIcon
                         dateFormat="dd/mm/yy"
                         locale="es"
+                        panelClassName="report-datepicker-panel"
                     />
                     {submitted && (!dates || dates.length !== 2) && (
                         <small className="p-error">Seleccione un rango de fechas</small>

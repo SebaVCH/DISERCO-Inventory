@@ -10,6 +10,131 @@
   --row-selected: #fee2e2;
 }
 
+.p-datepicker-panel,
+.p-calendar-panel {
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+.p-datepicker {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  border-radius: 16px !important;
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.p-datepicker-inline {
+  background: #ffffff !important;
+  border-radius: 16px !important;
+}
+
+.p-datepicker .p-datepicker-group-container {
+  background: #ffffff !important;
+}
+
+.p-datepicker .p-datepicker-group {
+  background: #ffffff !important;
+}
+
+.p-datepicker .p-datepicker-calendar-container {
+  background: #ffffff !important;
+}
+
+.p-datepicker table {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.p-datepicker table thead,
+.p-datepicker table tbody {
+  background: #ffffff !important;
+}
+
+.p-datepicker table tr {
+  background: #ffffff !important;
+}
+
+.p-datepicker table td,
+.p-datepicker table th {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.p-datepicker table td > span {
+  background: #ffffff;
+  background-color: #ffffff;
+  color: #1f2937;
+  border-radius: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+}
+
+.p-datepicker table td > span:not(.p-disabled):hover {
+  background: #fef2f2 !important;
+  background-color: #fef2f2 !important;
+  color: #ad0000;
+  border-color: rgba(173, 0, 0, 0.15);
+  transform: scale(1.05);
+}
+
+.p-datepicker table td > span.p-highlight {
+  background: linear-gradient(135deg, #ad0000 0%, #8b0000 100%) !important;
+  background-color: #ad0000 !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  border-color: #8b0000;
+  box-shadow: 0 4px 12px rgba(173, 0, 0, 0.35);
+}
+
+.p-datepicker table td > span.p-disabled {
+  color: #d1d5db !important;
+  background: #fafafa !important;
+  opacity: 1;
+  cursor: default;
+}
+
+.p-datepicker table td > span.p-disabled:hover {
+  background: #fafafa !important;
+  color: #d1d5db !important;
+  border-color: transparent !important;
+  transform: none !important;
+}
+
+.p-datepicker .p-monthpicker,
+.p-datepicker .p-yearpicker {
+  background: #ffffff !important;
+}
+
+.p-datepicker .p-monthpicker .p-monthpicker-month,
+.p-datepicker .p-yearpicker .p-yearpicker-year {
+  background: #ffffff;
+  color: #1f2937;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.p-datepicker .p-monthpicker .p-monthpicker-month:hover,
+.p-datepicker .p-yearpicker .p-yearpicker-year:hover {
+  background: #fff5f5 !important;
+  color: #ad0000;
+  border-color: rgba(173, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.p-datepicker .p-monthpicker .p-monthpicker-month.p-highlight,
+.p-datepicker .p-yearpicker .p-yearpicker-year.p-highlight {
+  background: linear-gradient(135deg, #ad0000 0%, #8b0000 100%) !important;
+  color: #ffffff !important;
+  border-color: #8b0000;
+  font-weight: 700;
+}
+
+
+
+
 .card {
   background-color: var(--brand-white);
   border: 1px solid var(--border-light);
@@ -302,7 +427,7 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   background: var(--brand-white);
 }
 
@@ -337,7 +462,7 @@
   flex: 1 1 auto;
   max-height: calc(90vh - 180px);
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: visible;
   border-left: 2px solid var(--border-light);
   border-right: 2px solid var(--border-light);
 }
@@ -658,3 +783,360 @@
     padding: 1rem;
   }
 }
+
+.report-date-range {
+  margin-top: 0.35rem;
+  padding: 0.85rem 1rem;
+  background: #f9fafb;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 1;
+}
+
+.report-date-range label {
+  margin-bottom: 0.45rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.report-date-range .p-calendar {
+  width: 100%;
+  position: relative;
+}
+
+.report-datepicker-panel {
+  z-index: 9999 !important;
+  margin-top: 0.5rem !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+.report-datepicker-panel .p-datepicker {
+  min-width: 340px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.report-datepicker-panel .p-datepicker .p-datepicker-header {
+  padding: 1.15rem 1.25rem;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.report-datepicker-panel .p-datepicker .p-datepicker-calendar-container {
+  padding: 1rem 0.75rem 0.75rem 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-datepicker-panel .p-datepicker table {
+  width: 100%;
+  margin: 0;
+}
+
+.report-datepicker-panel .p-datepicker table td,
+.report-datepicker-panel .p-datepicker table th {
+  padding: 0.3rem;
+  text-align: center;
+}
+
+.report-datepicker-panel .p-datepicker table thead tr th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+  font-weight: 700;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0.65rem 0.35rem;
+}
+
+
+
+
+.report-date-range .p-calendar .p-inputtext {
+  width: 100%;
+  background: var(--brand-white);
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.report-date-range .p-calendar .p-inputtext:hover {
+  border-color: var(--brand-red);
+  box-shadow: 0 2px 6px rgba(173, 0, 0, 0.1);
+}
+
+.report-date-range .p-calendar .p-inputtext:focus {
+  border-color: var(--brand-red);
+  box-shadow: 0 0 0 4px rgba(173, 0, 0, 0.12), 0 2px 6px rgba(173, 0, 0, 0.1);
+  outline: none;
+}
+
+.report-date-range .p-calendar .p-button {
+  background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
+  border-color: var(--brand-red);
+  color: var(--brand-white);
+  border-radius: 0 12px 12px 0;
+  padding: 0.9rem 1rem;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.report-date-range .p-calendar .p-button:enabled:hover {
+  background: linear-gradient(135deg, var(--brand-red-dark), #6b0000);
+  border-color: var(--brand-red-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(173, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.report-date-range .p-calendar .p-button:focus {
+  box-shadow: 0 0 0 2px var(--brand-white), 0 0 0 4px rgba(173, 0, 0, 0.35);
+}
+
+.report-date-range .p-calendar .p-datepicker {
+  background: var(--brand-white) !important;
+  border: 2px solid #e0e0e0;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.report-date-range .p-calendar .p-datepicker-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  color: var(--text-primary);
+  border-bottom: 2px solid #e5e7eb;
+  padding: 1.15rem 1.25rem;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.report-date-range .p-calendar .p-datepicker-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+  letter-spacing: 0.3px;
+}
+
+.report-date-range .p-calendar .p-datepicker-title .p-datepicker-year,
+.report-date-range .p-calendar .p-datepicker-title .p-datepicker-month {
+  font-weight: 700;
+  color: var(--brand-red);
+  cursor: pointer;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.report-date-range .p-calendar .p-datepicker-title .p-datepicker-year:hover,
+.report-date-range .p-calendar .p-datepicker-title .p-datepicker-month:hover {
+  background: rgba(173, 0, 0, 0.08);
+}
+
+.report-date-range .p-calendar .p-datepicker-prev,
+.report-date-range .p-calendar .p-datepicker-next {
+  color: var(--brand-red);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  border: 1.5px solid transparent;
+}
+
+.report-date-range .p-calendar .p-datepicker-prev:hover,
+.report-date-range .p-calendar .p-datepicker-next:hover {
+  background: rgba(173, 0, 0, 0.1);
+  color: var(--brand-red-dark);
+  border-color: rgba(173, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.report-date-range .p-calendar .p-datepicker-calendar-container {
+  background: var(--brand-white);
+  padding: 1rem 0.75rem 0.75rem 0.75rem;
+}
+
+.report-date-range .p-calendar .p-datepicker table {
+  background: var(--brand-white);
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: separate;
+}
+
+.report-date-range .p-calendar .p-datepicker table thead tr th {
+  background: var(--brand-white);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.65rem 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.report-date-range .p-calendar .p-datepicker table tbody {
+  background: var(--brand-white);
+}
+
+.report-date-range .p-calendar .p-datepicker table tbody tr {
+  background: var(--brand-white);
+}
+
+.report-date-range .p-calendar .p-datepicker table td {
+  background: var(--brand-white);
+  padding: 0.3rem;
+}
+
+.report-date-range .p-calendar .p-datepicker table td > span {
+  background: var(--brand-white);
+  color: var(--text-primary);
+  border-radius: 10px;
+  width: 2.65rem;
+  height: 2.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  font-size: 0.95rem;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.report-date-range .p-calendar .p-datepicker table td > span:not(.p-disabled):hover {
+  background: #fff5f5;
+  color: var(--brand-red);
+  border-color: rgba(173, 0, 0, 0.15);
+  transform: scale(1.08);
+  font-weight: 600;
+}
+
+.report-date-range .p-calendar .p-datepicker table td > span.p-highlight {
+  background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%) !important;
+  color: var(--brand-white) !important;
+  font-weight: 700;
+  border-color: var(--brand-red-dark);
+  box-shadow: 0 4px 12px rgba(173, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.report-date-range .p-calendar .p-datepicker table td > span.p-highlight:not(.p-disabled):hover {
+  background: linear-gradient(135deg, var(--brand-red-dark) 0%, #6b0000 100%) !important;
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(173, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.report-date-range .p-calendar .p-datepicker table td > span.p-disabled {
+  color: #d1d5db !important;
+  background: #fafafa;
+  opacity: 1;
+  font-weight: 400;
+  cursor: default;
+}
+
+.report-date-range .p-calendar .p-datepicker table td > span.p-disabled:hover {
+  background: #fafafa !important;
+  color: #d1d5db !important;
+  border-color: transparent !important;
+  transform: none !important;
+}
+
+.report-date-range .p-calendar .p-datepicker table td > span.p-highlight.p-highlight-range {
+  background: rgba(173, 0, 0, 0.12) !important;
+  color: var(--brand-red) !important;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.report-date-range .p-calendar .p-datepicker table td.p-datepicker-today > span {
+  position: relative;
+  font-weight: 700;
+  color: var(--brand-red);
+}
+
+.report-date-range .p-calendar .p-datepicker table td.p-datepicker-today > span::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  background: var(--brand-red);
+  border-radius: 50%;
+}
+
+.report-date-range .p-calendar .p-datepicker table td.p-datepicker-today > span.p-highlight::after {
+  background: var(--brand-white);
+}
+
+.report-date-range .p-calendar .p-datepicker .p-monthpicker,
+.report-date-range .p-calendar .p-datepicker .p-yearpicker {
+  background: var(--brand-white);
+  padding: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.report-date-range .p-calendar .p-datepicker .p-monthpicker {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.report-date-range .p-calendar .p-datepicker .p-yearpicker {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.report-date-range .p-calendar .p-datepicker .p-monthpicker .p-monthpicker-month,
+.report-date-range .p-calendar .p-datepicker .p-yearpicker .p-yearpicker-year {
+  background: var(--brand-white);
+  color: var(--text-primary);
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  padding: 0.85rem 1rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.report-date-range .p-calendar .p-datepicker .p-monthpicker .p-monthpicker-month:hover,
+.report-date-range .p-calendar .p-datepicker .p-yearpicker .p-yearpicker-year:hover {
+  background: #fff5f5;
+  color: var(--brand-red);
+  border-color: rgba(173, 0, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(173, 0, 0, 0.15);
+}
+
+.report-date-range .p-calendar .p-datepicker .p-monthpicker .p-monthpicker-month.p-highlight,
+.report-date-range .p-calendar .p-datepicker .p-yearpicker .p-yearpicker-year.p-highlight {
+  background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+  color: var(--brand-white);
+  border-color: var(--brand-red-dark);
+  box-shadow: 0 4px 14px rgba(173, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  font-weight: 700;
+}
+
