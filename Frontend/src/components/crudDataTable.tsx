@@ -36,6 +36,8 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     enableEditAction?: boolean;
     additionalActions?: (item: T) => ReactNode;
     enableCreateAction?: boolean;
+    toolbarLeftContent?: ReactNode;
+    toolbarRightContent?: ReactNode;
 }
 
 interface CrudDataTableProps<T extends BaseEntity> {
@@ -58,6 +60,8 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         enableEditAction = true,
         additionalActions,
         enableCreateAction = true,
+        toolbarLeftContent,
+        toolbarRightContent,
     } = config;
 
     const [items, setItems] = useState<T[]>(initialData);
@@ -68,6 +72,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     const [submitted, setSubmitted] = useState<boolean>(false);
     const [globalFilter, setGlobalFilter] = useState<string>('');
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<T[]>>(null);
 
@@ -94,6 +99,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         setSubmitted(true);
 
         if (validateItem(item)) {
+            setIsSaving(true);
             try {
                 const isNew = !item.id;
                 const savedItem = onSaveItem ? await onSaveItem(item, isNew) : item;
@@ -125,6 +131,8 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     detail: `No se pudo ${!item.id ? 'crear' : 'actualizar'} el registro`,
                     life: 3000
                 });
+            } finally {
+                setIsSaving(false);
             }
         }
     };
@@ -198,7 +206,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
 
     const leftToolbarTemplate = () => {
         return (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 align-items-center">
                 {enableCreateAction && (
                     <Button
                         label="Nuevo"
@@ -207,6 +215,15 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                         onClick={openNew}
                     />
                 )}
+                {toolbarLeftContent}
+            </div>
+        );
+    };
+
+    const rightToolbarTemplate = () => {
+        return (
+            <div className="flex flex-wrap gap-2 align-items-center justify-content-end">
+                {toolbarRightContent}
             </div>
         );
     };
@@ -256,7 +273,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
 
     const itemDialogFooter = (
         <React.Fragment>
-            <Button label="Guardar" icon="pi pi-check" onClick={saveItem} />
+            <Button label="Guardar" icon="pi pi-check" onClick={saveItem} disabled={isSaving} loading={isSaving} />
         </React.Fragment>
     );
 
@@ -274,6 +291,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 <Toolbar
                     className="mb-4"
                     left={leftToolbarTemplate}
+                    right={rightToolbarTemplate}
                 />
 
                 <DataTable

@@ -7,7 +7,6 @@ import type { InventoryItem } from '../types/inventoryItem.ts';
 import {useEffect, useState} from "react";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
-import {RadioButton} from "primereact/radiobutton";
 import {useInventory} from "../hooks/useInventory.ts";
 import {SelectButton} from "primereact/selectbutton";
 import {InputNumber} from "primereact/inputnumber";
@@ -53,6 +52,24 @@ function Inventory() {
     const criticalStockOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
     const { data: sections = [] } = useSection();
     const sectionOptions = [{ label: 'Sin sección', value: null }, ...(sections?.map?.((section: Section) => ({ label: section.name, value: section.id })) || [])];
+    const statusOptions = [
+        { label: 'Todos', value: 'all' },
+        { label: 'No eliminados', value: 'unhidden' },
+        { label: 'Eliminados', value: 'hidden' },
+        { label: 'Stock crítico', value: 'critical' },
+    ];
+    const statusFilterControl = (
+        <div className="inventory-toolbar-filters">
+            <span className="inventory-filter-label">Estado</span>
+            <SelectButton
+                value={statusFilter}
+                options={statusOptions}
+                onChange={(e) => setStatusFilter(e.value)}
+                allowEmpty={false}
+                className="inventory-status-select"
+            />
+        </div>
+    );
 
     const normalizeSectionId = (value: number | string | null | undefined) => {
         if (value === null || value === undefined || value === '') return null;
@@ -73,6 +90,7 @@ function Inventory() {
         entityName: 'Item de Inventario',
         entityNamePlural: 'Items de Inventario',
         title: 'Gestión de inventario',
+        toolbarRightContent: statusFilterControl,
         columns: [
             { field: 'id', header: 'Código', sortable: true, style: { minWidth: '5rem' } },
             { field: 'section_name', header: 'Sección', sortable: true, style: { minWidth: '7rem' } },
@@ -215,26 +233,6 @@ function Inventory() {
 
     return <div>
         <CrudDataTable config={config} />
-        <div className="card flex justify-content-center mb-3">
-            <div className="flex flex-wrap gap-3">
-                <div className="flex align-items-center">
-                    <RadioButton inputId="inv-status-all" name="inv-status" value="all" onChange={(e) => setStatusFilter(e.value)} checked={statusFilter === 'all'} />
-                    <label htmlFor="inv-status-all" className="ml-2">Todos</label>
-                </div>
-                <div className="flex align-items-center">
-                    <RadioButton inputId="inv-status-unhidden" name="inv-status" value="unhidden" onChange={(e) => setStatusFilter(e.value)} checked={statusFilter === 'unhidden'} />
-                    <label htmlFor="inv-status-unhidden" className="ml-2">No eliminados</label>
-                </div>
-                <div className="flex align-items-center">
-                    <RadioButton inputId="inv-status-hidden" name="inv-status" value="hidden" onChange={(e) => setStatusFilter(e.value)} checked={statusFilter === 'hidden'} />
-                    <label htmlFor="inv-status-hidden" className="ml-2">Eliminados</label>
-                </div>
-                <div className="flex align-items-center">
-                    <RadioButton inputId="inv-critical" name="inv-status" value="critical" onChange={(e) => setStatusFilter(e.value)} checked={statusFilter === 'critical'} />
-                    <label htmlFor="inv-critical" className="ml-2">Stock Critico</label>
-                </div>
-            </div>
-        </div>
     </div>;
 }
 
