@@ -2,7 +2,7 @@ import type React from 'react';
 import {useEffect, useMemo, useState} from 'react';
 import {Dropdown, type DropdownChangeEvent} from 'primereact/dropdown';
 import {classNames} from 'primereact/utils';
-import {ProgressSpinner} from 'primereact/progressspinner';
+import TableSkeleton from '../components/TableSkeleton.tsx';
 import {Message} from 'primereact/message';
 import CrudDataTable, {type CrudDataTableConfig} from '../components/crudDataTable.tsx';
 import {useNotificationSubscriptions} from '../hooks/useNotificationSubscription.ts';
@@ -80,7 +80,7 @@ function NotificationPage() {
     };
 
     if (isLoadingSubscriptions || isLoadingUsers) {
-        return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
+        return <TableSkeleton rows={5} columns={3} />;
     }
 
     if (isErrorSubscriptions || isErrorUsers) {

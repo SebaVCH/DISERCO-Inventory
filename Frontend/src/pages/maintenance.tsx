@@ -4,7 +4,7 @@ import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
-import { ProgressSpinner } from 'primereact/progressspinner';
+import TableSkeleton from '../components/TableSkeleton.tsx';
 import { classNames } from 'primereact/utils';
 import CrudDataTable, { type CrudDataTableConfig } from '../components/crudDataTable.tsx';
 import { useMaintenance } from '../hooks/useMaintenance.ts';
@@ -260,7 +260,7 @@ function MaintenancePage() {
     };
 
     if (isLoading || isInventoryLoading) {
-        return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
+        return <TableSkeleton rows={6} columns={4} />;
     }
 
     if (isError || isInventoryError) {

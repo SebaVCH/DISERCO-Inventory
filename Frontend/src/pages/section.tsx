@@ -5,7 +5,7 @@ import type { CrudDataTableConfig } from '../components/crudDataTable.tsx';
 import type { Section } from '../types/section';
 import {useSection} from "../hooks/useSection.ts";
 import {useEffect, useState} from "react";
-import {ProgressSpinner} from "primereact/progressspinner";
+import TableSkeleton from "../components/TableSkeleton.tsx";
 import {Message} from "primereact/message";
 import sectionAPI from "../services/sectionService.ts";
 import { useQueryClient } from "@tanstack/react-query";
@@ -69,7 +69,7 @@ function SectionPage() {
     };
 
     if (isLoading) {
-        return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
+        return <TableSkeleton rows={4} columns={2} />;
     }
 
     if (isError) {

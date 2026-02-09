@@ -12,4 +12,5 @@ export interface InventoryItem {
     comments?: string
     is_deleted: boolean
     deleted_at: string
+    is_tool: boolean
 }

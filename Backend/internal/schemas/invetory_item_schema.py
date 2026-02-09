@@ -11,6 +11,7 @@ class InventoryItemBase(BaseModel):
     critical_stock_quantity: Decimal | None = None
     comments: str | None = None
     is_deleted: bool = False
+    is_tool: bool = False
 
 class InventoryItemCreate(BaseModel):
     id: int | None = None
@@ -20,7 +21,7 @@ class InventoryItemCreate(BaseModel):
     has_critical_stock: bool = False
     critical_stock_quantity: Decimal | None = None
     comments: str | None = None
-    pass
+    is_tool: bool = False
 
 class InventoryItemUpdate(BaseModel):
     name: str | None = None
@@ -29,6 +30,7 @@ class InventoryItemUpdate(BaseModel):
     has_critical_stock: bool | None = None
     critical_stock_quantity: Decimal | None = None
     comments: str | None = None
+    is_tool: bool | None = None
 
 class InventoryItemRead(InventoryItemBase):
     total_entries: Decimal
@@ -40,4 +42,3 @@ class InventoryItemRead(InventoryItemBase):
     model_config = {
         "from_attributes": True
     }
-

@@ -25,7 +25,8 @@ def append_section_name(inventory: list[Any], result: list[Any]):
             critical_stock_quantity=item.critical_stock_quantity,
             comments=item.comments,
             is_deleted=item.is_deleted,
-            deleted_at=item.deleted_at
+            deleted_at=item.deleted_at,
+            is_tool=item.is_tool,
         ))
 
 @router.get("/total-inventory/{status}", response_model=List[InventoryItemRead])
@@ -34,20 +35,27 @@ def get_total_inventory(status: str,db: Session = Depends(get_db)):
     if status == "all":
         inventory = db.query(InventoryItem).options(joinedload(InventoryItem.section)).all()
         append_section_name(inventory, result)
-    if status == "unhidden":
+    elif status == "unhidden":
         inventory = db.query(InventoryItem).filter(InventoryItem.is_deleted == False).options(joinedload(InventoryItem.section)).all()
         append_section_name(inventory, result)
-    if status == "hidden":
+    elif status == "hidden":
         inventory = db.query(InventoryItem).filter(InventoryItem.is_deleted == True).options(joinedload(InventoryItem.section)).all()
         append_section_name(inventory, result)
-    if status == "critical":
-        critical_inventory = db.query(InventoryItem).options(joinedload(InventoryItem.section)).filter(
-            (InventoryItem.has_critical_stock == True)
-            &
-            (InventoryItem.current_stock <= InventoryItem.critical_stock_quantity + 30)
-            &
-            (InventoryItem.is_deleted == False)
-        ).all()
+
+    elif status == "tools":
+        inventory = db.query(InventoryItem).options(joinedload(InventoryItem.section)).filter((InventoryItem.is_tool == True) & (InventoryItem.is_deleted == False)).all()
+        append_section_name(inventory, result)
+
+    elif status == "not-received-tools":
+        inventory = db.query(InventoryItem).options(joinedload(InventoryItem.section)).filter((InventoryItem.is_tool == True) & (InventoryItem.is_deleted == False) & (InventoryItem.current_stock == 0)).all()
+        append_section_name(inventory, result)
+
+    elif status == "non-tools":
+        inventory = db.query(InventoryItem).options(joinedload(InventoryItem.section)).filter((InventoryItem.is_tool == False) & (InventoryItem.is_deleted == False)).all()
+        append_section_name(inventory, result)
+
+    elif status == "critical":
+        critical_inventory = db.query(InventoryItem).options(joinedload(InventoryItem.section)).filter((InventoryItem.has_critical_stock == True) & (InventoryItem.current_stock <= InventoryItem.critical_stock_quantity + 30) & (InventoryItem.is_deleted == False)).all()
         append_section_name(critical_inventory, result)
     return result
 

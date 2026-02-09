@@ -4,15 +4,15 @@ import { classNames } from 'primereact/utils';
 import CrudDataTable from '../components/crudDataTable.tsx';
 import type { CrudDataTableConfig } from '../components/crudDataTable.tsx';
 import type { InventoryItem } from '../types/inventoryItem.ts';
-import {useEffect, useState} from "react";
-import { ProgressSpinner } from "primereact/progressspinner";
+import { useEffect, useState } from "react";
+import TableSkeleton from "../components/TableSkeleton.tsx";
 import { Message } from "primereact/message";
-import {useInventory} from "../hooks/useInventory.ts";
-import {SelectButton} from "primereact/selectbutton";
-import {InputNumber} from "primereact/inputnumber";
+import { useInventory } from "../hooks/useInventory.ts";
+import { SelectButton } from "primereact/selectbutton";
+import { InputNumber } from "primereact/inputnumber";
 import inventoryItemAPI from "../services/inventoryItemService.ts";
-import {Dropdown, type DropdownChangeEvent} from "primereact/dropdown";
-import {useSection} from "../hooks/useSection.ts";
+import { Dropdown, type DropdownChangeEvent } from "primereact/dropdown";
+import { useSection } from "../hooks/useSection.ts";
 import type { Section } from "../types/section";
 import { queryClient } from "../lib/queryClient.ts";
 
@@ -28,9 +28,11 @@ const emptyInventoryItem: InventoryItem = {
     section_id: null,
     section_name: "Sin sección",
     deleted_at: "",
+    is_tool: false,
 };
 
 const hasCriticalStockTemplate = (rowData: InventoryItem) => rowData.has_critical_stock ? 'Si' : 'No';
+const isToolTemplate = (rowData: InventoryItem) => rowData.is_tool ? 'Si' : 'No';
 const isDeletedTemplate = (rowData: InventoryItem) => rowData.is_deleted ? 'Si' : 'No';
 const dateTemplate = (rowData: InventoryItem) => {
     if (!rowData.deleted_at) return '';
@@ -46,10 +48,11 @@ const dateTemplate = (rowData: InventoryItem) => {
 };
 
 function Inventory() {
-    const [statusFilter, setStatusFilter] = useState<'all' | 'unhidden' | 'hidden' | 'critical'>('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'unhidden' | 'hidden' | 'critical' | 'tools' | 'non-tools'| 'not-received-tools'>('all');
     const { data, isLoading, isError, refetch } = useInventory(statusFilter);
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
     const criticalStockOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
+    const isToolOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
     const { data: sections = [] } = useSection();
     const sectionOptions = [{ label: 'Sin sección', value: null }, ...(sections?.map?.((section: Section) => ({ label: section.name, value: section.id })) || [])];
     const statusOptions = [
@@ -57,6 +60,9 @@ function Inventory() {
         { label: 'No eliminados', value: 'unhidden' },
         { label: 'Eliminados', value: 'hidden' },
         { label: 'Stock crítico', value: 'critical' },
+        { label: 'Herramientas', value: 'tools' },
+        { label: 'No herramientas', value: 'non-tools' },
+        { label: 'Herramientas no recibidas', value: 'not-received-tools' },
     ];
     const statusFilterControl = (
         <div className="inventory-toolbar-filters">
@@ -96,6 +102,7 @@ function Inventory() {
             { field: 'section_name', header: 'Sección', sortable: true, style: { minWidth: '7rem' } },
             { field: 'name', header: 'Nombre', sortable: true, style: { minWidth: '8rem' } },
             { field: 'description', header: 'Descripción', sortable: true, style: { minWidth: '12rem' } },
+            { field: 'is_tool', header: '¿Es herramienta?', body: isToolTemplate, sortable: true, style: { minWidth: '6rem' } },
             { field: 'total_entries', header: 'Entradas', sortable: true, style: { minWidth: '6rem' } },
             { field: 'total_exits', header: 'Salidas', sortable: true, style: { minWidth: '6rem' } },
             { field: 'current_stock', header: 'Stock Actual', sortable: true, style: { minWidth: '4rem' } },
@@ -103,7 +110,7 @@ function Inventory() {
             { field: 'critical_stock_quantity', header: 'Stock crítico minimo', sortable: true, style: { minWidth: '8rem' } },
             { field: 'comments', header: 'Comentarios', sortable: true, style: { minWidth: '8rem' } },
             { field: 'is_deleted', header: '¿Esta eliminado?', body: isDeletedTemplate, sortable: true, style: { minWidth: '6rem' } },
-            { field: 'deleted_at', header: 'Fecha de eliminacion/baja?',body: dateTemplate , sortable: true, style: { minWidth: '6rem' } },
+            { field: 'deleted_at', header: 'Fecha de eliminacion/baja?', body: dateTemplate, sortable: true, style: { minWidth: '6rem' } },
         ],
         dialogContent: (item, submitted, onInputChange, onInputTextAreaChange, onInputNumberChange) => (
             <div className="dialog-grid two-columns">
@@ -135,6 +142,16 @@ function Inventory() {
                         value={item.has_critical_stock}
                         onChange={(e) => onInputChange({ target: { value: e.value } } as unknown as React.ChangeEvent<HTMLInputElement>, 'has_critical_stock')}
                         options={criticalStockOptions}
+                    />
+                </div>
+
+                <div className="field dialog-field">
+                    <label htmlFor="is_tool" className="font-bold">¿Es herramienta?</label>
+                    <SelectButton
+                        className="critical-stock-toggle"
+                        value={item.is_tool}
+                        onChange={(e) => onInputChange({ target: { value: e.value } } as unknown as React.ChangeEvent<HTMLInputElement>, 'is_tool')}
+                        options={isToolOptions}
                     />
                 </div>
 
@@ -197,6 +214,7 @@ function Inventory() {
                 critical_stock_quantity: item.critical_stock_quantity,
                 comments: item.comments,
                 section_id: normalizedSectionId,
+                is_tool: item.is_tool,
             };
 
             if (isNew) {
@@ -224,7 +242,7 @@ function Inventory() {
     };
 
     if (isLoading) {
-        return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
+        return <TableSkeleton rows={8} columns={5} />;
     }
 
     if (isError) {

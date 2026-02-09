@@ -8,7 +8,7 @@ import type {InventoryMovement} from "../types/inventoryMovement.ts";
 import {useInventory, useInventoryMovement} from "../hooks/useInventory.ts";
 import inventoryItemAPI from "../services/inventoryItemService.ts";
 import {useEffect, useState} from "react";
-import {ProgressSpinner} from "primereact/progressspinner";
+import TableSkeleton from "../components/TableSkeleton.tsx";
 import {Message} from "primereact/message";
 import useUserStore from "../store/useUserStore.ts";
 
@@ -252,7 +252,7 @@ function InventoryMovementPage() {
         enableEditAction: false,
     };
     if (isLoading) {
-        return <div className="flex justify-content-center mt-5"><ProgressSpinner /></div>;
+        return <TableSkeleton rows={7} columns={5} />;
     }
 
     if (isError) {

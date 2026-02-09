@@ -5,6 +5,8 @@ import { addLocale } from "primereact/api";
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
+import { Message } from 'primereact/message';
+import TableSkeleton from "../components/TableSkeleton.tsx";
 import type { Report } from "../types/report.ts";
 import { useReports } from "../hooks/useReport.ts";
 import reportAPI from "../services/reportService.ts";
@@ -13,7 +15,7 @@ import CrudDataTable, { type CrudDataTableConfig } from "../components/crudDataT
 import useUserStore from "../store/useUserStore.ts";
 
 function ReportPage() {
-    const { data: reports = [] } = useReports();
+    const { data: reports = [], isLoading, isError } = useReports();
     const [isDownloading, setIsDownloading] = useState(false);
     const [dates, setDates] = useState<Date[] | null>(null);
     const toast = useRef<Toast>(null);
@@ -174,6 +176,14 @@ function ReportPage() {
             />
         ),
     };
+
+    if (isLoading) {
+        return <TableSkeleton rows={5} columns={4} />;
+    }
+
+    if (isError) {
+        return <Message severity="error" text="Error al cargar los reportes" />;
+    }
 
     return (
         <div>

@@ -27,6 +27,7 @@ class InventoryItem(Base):
     comments: Mapped[Optional[str]] = mapped_column(String(255))
     is_deleted: Mapped[bool] = mapped_column(nullable=False, default=False)
     deleted_at: Mapped[Optional[datetime]] = mapped_column()
+    is_tool: Mapped[bool] = mapped_column(nullable=False, default=False)
 
     section: Mapped[Optional["Section"]] = relationship(back_populates="inventory_items")
     movements: Mapped[List["InventoryMovement"]] = relationship(back_populates="inventory_item")
