@@ -32,7 +32,7 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     initialData: T[];
     validateItem: (item: T) => boolean;
     onDeleteItem?: (id: number) => Promise<void>;
-    onSaveItem?: (item: T, isNew: boolean) => Promise<T>;
+    onSaveItem?: (item: T, isNew: boolean) => Promise<T | { data: T; suppressMessage?: boolean }>;
     enableEditAction?: boolean;
     additionalActions?: (item: T) => ReactNode;
     enableCreateAction?: boolean;
@@ -102,7 +102,18 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
             setIsSaving(true);
             try {
                 const isNew = !item.id;
-                const savedItem = onSaveItem ? await onSaveItem(item, isNew) : item;
+                const result = onSaveItem ? await onSaveItem(item, isNew) : item;
+
+                let savedItem: T;
+                let suppressMessage = false;
+
+                if (result && typeof result === 'object' && 'data' in result && 'suppressMessage' in result) {
+                    savedItem = (result as { data: T }).data;
+                    suppressMessage = (result as { suppressMessage: boolean }).suppressMessage;
+                } else {
+                    savedItem = result as T;
+                }
+
                 const updatedItems = [...items];
                 const updatedItem = { ...savedItem };
 
@@ -116,12 +127,16 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 }
 
                 setItems(updatedItems);
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Exitoso',
-                    detail: `${entityName} ${isNew ? 'Creado' : 'Actualizado'}`,
-                    life: 3000
-                });
+
+                if (!suppressMessage) {
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Exitoso',
+                        detail: `${entityName} ${isNew ? 'Creado' : 'Actualizado'}`,
+                        life: 3000
+                    });
+                }
+
                 setItemDialog(false);
                 setItem(emptyItem);
             } catch (_error) {

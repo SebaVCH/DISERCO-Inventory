@@ -7,7 +7,8 @@ import {classNames} from "primereact/utils";
 import type {InventoryMovement} from "../types/inventoryMovement.ts";
 import {useInventory, useInventoryMovement} from "../hooks/useInventory.ts";
 import inventoryItemAPI from "../services/inventoryItemService.ts";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
+import {Toast} from "primereact/toast";
 import TableSkeleton from "../components/TableSkeleton.tsx";
 import {Message} from "primereact/message";
 import useUserStore from "../store/useUserStore.ts";
@@ -57,11 +58,45 @@ const itemNameTemplate = (rowData: InventoryMovement) => {
 
 function InventoryMovementPage() {
      const { data, isLoading, isError, refetch } = useInventoryMovement();
-     const { data: inventoryItems = [] } = useInventory('unhidden');
+     const { data: inventoryItems = [], refetch: refetchInventory } = useInventory('unhidden');
      const { user } = useUserStore();
+     const toast = useRef<Toast>(null);
      const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([]);
      const [movementRows, setMovementRows] = useState<MovementRow[]>([createEmptyRow()]);
      const [itemSearch, setItemSearch] = useState("");
+
+    const getItemLabel = (itemId: number) => {
+        const item = inventoryItems.find((inv) => inv.id === itemId);
+        if (!item) return "Artículo";
+        return item.description ? `${item.name} ${item.description}` : item.name;
+    };
+
+    const getAvailableStock = (itemId: number) => {
+        const item = inventoryItems.find((inv) => inv.id === itemId);
+        return item?.current_stock ?? 0;
+    };
+
+    const insufficientStockItems = useMemo(
+        () => movementRows
+            .filter((row) => row.inventory_item_id && row.exitQuantity > getAvailableStock(row.inventory_item_id))
+            .map((row) => ({
+                id: row.inventory_item_id,
+                name: getItemLabel(row.inventory_item_id),
+                requested: row.exitQuantity,
+                available: getAvailableStock(row.inventory_item_id)
+            })),
+        [movementRows, inventoryItems]
+    );
+
+    const hasActionableMovements = () =>
+        movementRows.some((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
+
+    const hasValidMovements = () =>
+        movementRows.some(
+            (row) =>
+                row.inventory_item_id &&
+                (row.entryQuantity > 0 || (row.exitQuantity > 0 && row.exitQuantity <= getAvailableStock(row.inventory_item_id)))
+        );
 
     useEffect(() => {
         if (data) {
@@ -109,15 +144,42 @@ function InventoryMovementPage() {
         updateRow(rowKey, (row) => ({ ...row, [field]: value ?? 0 }));
     };
 
-    const hasValidMovements = () => movementRows.some((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
-
     const saveMovements = async () => {
         const userId = user?.id;
         if (userId === null || userId === undefined) return;
         const actionableRows = movementRows.filter((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
+        const validRows = actionableRows.filter(
+            (row) => row.entryQuantity > 0 || (row.exitQuantity > 0 && row.exitQuantity <= getAvailableStock(row.inventory_item_id))
+        );
+
+        if (!validRows.length) {
+            // Check if failure is due to stock
+            const skippedDueToStock = actionableRows.some(row => row.exitQuantity > 0 && row.exitQuantity > getAvailableStock(row.inventory_item_id));
+
+            if (skippedDueToStock) {
+                 const skippedAll = actionableRows.filter(
+                    (row) => row.exitQuantity > 0 && row.exitQuantity > getAvailableStock(row.inventory_item_id)
+                );
+                const detail = skippedAll
+                .map(
+                    (row) =>
+                        `${getItemLabel(row.inventory_item_id)} (solicitado: ${row.exitQuantity}, disponible: ${getAvailableStock(row.inventory_item_id)})`
+                )
+                .join(" | ");
+                toast.current?.show({ severity: "warn", summary: "Stock insuficiente", detail, life: 6000 });
+                // We throw error to keep dialog open and allow user to fix
+                throw new Error("Stock insuficiente para realizar los movimientos.");
+            }
+            throw new Error("No hay movimientos válidos para procesar.");
+        }
+
+        const skippedForStock = actionableRows.filter(
+            (row) => row.exitQuantity > 0 && row.exitQuantity > getAvailableStock(row.inventory_item_id)
+        );
+
         const requests: Promise<any>[] = [];
 
-        actionableRows.forEach((row) => {
+        validRows.forEach((row) => {
             const payload = { observation: row.observation } as { quantity: number; observation?: string };
             if (row.entryQuantity > 0) {
                 requests.push(
@@ -128,7 +190,9 @@ function InventoryMovementPage() {
                     )
                 );
             }
-            if (row.exitQuantity > 0) {
+            const availableStock = getAvailableStock(row.inventory_item_id);
+            const canExit = row.exitQuantity > 0 && row.exitQuantity <= availableStock;
+            if (canExit) {
                 requests.push(
                     inventoryItemAPI.createItemExit(
                         row.inventory_item_id,
@@ -143,8 +207,23 @@ function InventoryMovementPage() {
 
         await Promise.all(requests);
         await refetch();
+        await refetchInventory();
+
         setMovementRows([createEmptyRow()]);
         setItemSearch("");
+
+        if (skippedForStock.length) {
+            const detail = skippedForStock
+                .map(
+                    (row) =>
+                        `${getItemLabel(row.inventory_item_id)} (solicitado: ${row.exitQuantity}, disponible: ${getAvailableStock(row.inventory_item_id)})`
+                )
+                .join(" | ");
+            toast.current?.show({ severity: "warn", summary: "Movimientos guardados con alertas", detail: `Algunos items no se procesaron por falta de stock: ${detail}`, life: 8000 });
+            return { data: { ...emptyInventoryMovement }, suppressMessage: true };
+        }
+
+        return { data: { ...emptyInventoryMovement } };
     };
 
     const config: CrudDataTableConfig<InventoryMovement> = {
@@ -162,7 +241,7 @@ function InventoryMovementPage() {
         ],
         dialogContent: (_inventory_movement, submitted) => {
             const rowsMissingItem = (row: MovementRow) => submitted && (row.entryQuantity > 0 || row.exitQuantity > 0) && !row.inventory_item_id;
-            const showNoQuantityWarning = submitted && !hasValidMovements();
+            const showNoQuantityWarning = submitted && !hasActionableMovements();
             return (
                 <>
                     <div className="grid">
@@ -210,6 +289,9 @@ function InventoryMovementPage() {
                                     </div>
                                     <div className="field dialog-field">
                                         <label htmlFor={`exitQuantity_${row.key}`} className="font-bold">Cantidad de Salida</label>
+                                        {row.inventory_item_id !== 0 && (
+                                            <small className="text-600 block mb-2">Stock disponible: {getAvailableStock(row.inventory_item_id)}</small>
+                                        )}
                                         <InputNumber
                                             id={`exitQuantity_${row.key}`}
                                             value={row.exitQuantity}
@@ -217,7 +299,11 @@ function InventoryMovementPage() {
                                             min={0}
                                             minFractionDigits={0}
                                             maxFractionDigits={2}
+                                            className={classNames({ 'p-invalid': submitted && row.inventory_item_id !== 0 && row.exitQuantity > getAvailableStock(row.inventory_item_id) })}
                                         />
+                                        {submitted && row.inventory_item_id !== 0 && row.exitQuantity > getAvailableStock(row.inventory_item_id) && (
+                                            <small className="p-error">Sin stock suficiente para la salida solicitada.</small>
+                                        )}
                                     </div>
                                     <div className="field dialog-field">
                                         <label htmlFor={`observation_${row.key}`} className="font-bold">Observación</label>
@@ -232,6 +318,14 @@ function InventoryMovementPage() {
                             </div>
                         ))}
                     </div>
+                    {submitted && insufficientStockItems.length > 0 && (
+                        <Message
+                            severity="warn"
+                            text={`Sin stock suficiente para: ${insufficientStockItems
+                                .map((item) => `${item.name} (sol: ${item.requested}, disp: ${item.available})`)
+                                .join(' | ')}`}
+                        />
+                    )}
                     {showNoQuantityWarning && <Message severity="warn" text="Agrega al menos un movimiento con entrada o salida mayor a 0." />}
                     <Message severity="info" text="Cada fila permite enviar entrada y/o salida para distintos artículos. Las cantidades empiezan en 0." />
                 </>
@@ -242,8 +336,7 @@ function InventoryMovementPage() {
         initialData: inventoryMovements,
         validateItem: () => hasValidMovements(),
         onSaveItem: async () => {
-            await saveMovements();
-            return { ...emptyInventoryMovement } as InventoryMovement;
+            return await saveMovements() as any;
         },
         onDeleteItem: async (id: number) => {
             await inventoryItemAPI.deleteMovement(id);
@@ -259,7 +352,12 @@ function InventoryMovementPage() {
         return <Message severity="error" text="Error al cargar el inventario" />;
     }
 
-    return <CrudDataTable config={config} />;
+    return (
+        <>
+            <Toast ref={toast} position="top-right" />
+            <CrudDataTable config={config} />
+        </>
+    );
 }
 
 export default InventoryMovementPage;
