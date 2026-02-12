@@ -10,6 +10,8 @@ import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
+import { Menu } from 'primereact/menu';
+import { Checkbox } from 'primereact/checkbox';
 
 export interface BaseEntity {
     id: number;
@@ -38,6 +40,7 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     enableCreateAction?: boolean;
     toolbarLeftContent?: ReactNode;
     toolbarRightContent?: ReactNode;
+    enableColumnToggle?: boolean;
 }
 
 interface CrudDataTableProps<T extends BaseEntity> {
@@ -62,6 +65,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         enableCreateAction = true,
         toolbarLeftContent,
         toolbarRightContent,
+        enableColumnToggle = false,
     } = config;
 
     const [items, setItems] = useState<T[]>(initialData);
@@ -75,10 +79,36 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     const [isSaving, setIsSaving] = useState(false);
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<T[]>>(null);
+    const columnMenuRef = useRef<Menu>(null);
+
+    // Estado para controlar la visibilidad de las columnas
+    const [visibleColumns, setVisibleColumns] = useState<{ [key: string]: boolean }>(() => {
+        // Intentar cargar las preferencias desde localStorage
+        const storageKey = `columnVisibility_${title.replace(/\s+/g, '_')}`;
+        const savedPreferences = localStorage.getItem(storageKey);
+
+        if (savedPreferences) {
+            return JSON.parse(savedPreferences);
+        }
+
+        // Por defecto, todas las columnas son visibles
+        const initialVisibility: { [key: string]: boolean } = {};
+        columns.forEach((col, index) => {
+            const key = col.field || col.header?.toString() || `column_${index}`;
+            initialVisibility[key] = true;
+        });
+        return initialVisibility;
+    });
 
     useEffect(() => {
         setItems(initialData);
     }, [initialData]);
+
+    // Persistir preferencias de columnas en localStorage
+    useEffect(() => {
+        const storageKey = `columnVisibility_${title.replace(/\s+/g, '_')}`;
+        localStorage.setItem(storageKey, JSON.stringify(visibleColumns));
+    }, [visibleColumns, title]);
 
     const openNew = () => {
         setItem(emptyItem);
@@ -226,6 +256,26 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         setItem(_item);
     };
 
+    const toggleColumnVisibility = (columnKey: string) => {
+        setVisibleColumns(prev => ({
+            ...prev,
+            [columnKey]: !prev[columnKey]
+        }));
+    };
+
+    const toggleAllColumns = (visible: boolean) => {
+        const newVisibility: { [key: string]: boolean } = {};
+        columns.forEach((col, index) => {
+            const key = col.field || col.header?.toString() || `column_${index}`;
+            newVisibility[key] = visible;
+        });
+        setVisibleColumns(newVisibility);
+    };
+
+    const getColumnKey = (col: ColumnProps, index: number): string => {
+        return col.field || col.header?.toString() || `column_${index}`;
+    };
+
     const leftToolbarTemplate = () => {
         return (
             <div className="flex flex-wrap gap-2 align-items-center">
@@ -279,17 +329,29 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     const header = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
             <h4 className="m-0">{title}</h4>
-            <IconField iconPosition="left">
-                <InputIcon className="pi pi-search" />
-                <InputText
-                    type="search"
-                    placeholder="Buscar..."
-                    onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        setGlobalFilter(target.value);
-                    }}
-                />
-            </IconField>
+            <div className="flex gap-2 align-items-center">
+                {enableColumnToggle && (
+                    <Button
+                        icon="pi pi-table"
+                        rounded
+                        outlined
+                        tooltip="Mostrar/Ocultar Columnas"
+                        tooltipOptions={{ position: 'top' }}
+                        onClick={(e) => columnMenuRef.current?.toggle(e)}
+                    />
+                )}
+                <IconField iconPosition="left">
+                    <InputIcon className="pi pi-search" />
+                    <InputText
+                        type="search"
+                        placeholder="Buscar..."
+                        onInput={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            setGlobalFilter(target.value);
+                        }}
+                    />
+                </IconField>
+            </div>
         </div>
     );
 
@@ -309,6 +371,45 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     return (
         <div>
             <Toast ref={toast} />
+            <Menu
+                ref={columnMenuRef}
+                popup
+                model={[
+                    {
+                        template: () => (
+                            <div className="p-3" style={{ minWidth: '250px' }}>
+                                <div className="flex align-items-center justify-content-between mb-3">
+                                    <span className="font-bold">Columnas Visibles</span>
+                                    <Button
+                                        label="Todas"
+                                        size="small"
+                                        text
+                                        onClick={() => toggleAllColumns(true)}
+                                    />
+                                </div>
+                                <div className="flex flex-column gap-2">
+                                    {columns.map((col, index) => {
+                                        const columnKey = getColumnKey(col, index);
+                                        const columnLabel = col.header?.toString() || `Columna ${index + 1}`;
+                                        return (
+                                            <div key={columnKey} className="flex align-items-center">
+                                                <Checkbox
+                                                    inputId={`col-${columnKey}`}
+                                                    checked={visibleColumns[columnKey] ?? true}
+                                                    onChange={() => toggleColumnVisibility(columnKey)}
+                                                />
+                                                <label htmlFor={`col-${columnKey}`} className="ml-2 cursor-pointer">
+                                                    {columnLabel}
+                                                </label>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )
+                    }
+                ]}
+            />
             <div className="card">
                 <Toolbar
                     className="mb-4"
@@ -336,9 +437,13 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     header={header}
                     emptyMessage={`No hay ${entityNamePlural.toLowerCase()} registrados`}
                 >
-                    {columns.map((col, index) => (
-                        <Column key={index} {...col} />
-                    ))}
+                    {columns.map((col, index) => {
+                        const columnKey = getColumnKey(col, index);
+                        if (!visibleColumns[columnKey] && visibleColumns[columnKey] !== undefined) {
+                            return null;
+                        }
+                        return <Column key={index} {...col} />;
+                    })}
                     <Column header="Acciones" body={actionBodyTemplate} exportable={false} style={{ minWidth: '8rem' }} />
                 </DataTable>
             </div>

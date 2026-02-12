@@ -97,6 +97,7 @@ function Inventory() {
         entityNamePlural: 'Items de Inventario',
         title: 'Gestión de inventario',
         toolbarRightContent: statusFilterControl,
+        enableColumnToggle: true,
         columns: [
             { field: 'id', header: 'Código', sortable: true, style: { minWidth: '5rem' } },
             { field: 'section_name', header: 'Sección', sortable: true, style: { minWidth: '7rem' } },
