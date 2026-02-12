@@ -76,27 +76,74 @@ function InventoryMovementPage() {
         return item?.current_stock ?? 0;
     };
 
+    const actionableRows = useMemo(
+        () =>
+            movementRows.filter(
+                (row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0)
+            ),
+        [movementRows]
+    );
+
+    const zeroQuantityRows = useMemo(
+        () =>
+            movementRows.filter(
+                (row) => row.inventory_item_id && row.entryQuantity === 0 && row.exitQuantity === 0
+            ),
+        [movementRows]
+    );
+
     const insufficientStockItems = useMemo(
-        () => movementRows
-            .filter((row) => row.inventory_item_id && row.exitQuantity > getAvailableStock(row.inventory_item_id))
-            .map((row) => ({
-                id: row.inventory_item_id,
-                name: getItemLabel(row.inventory_item_id),
-                requested: row.exitQuantity,
-                available: getAvailableStock(row.inventory_item_id)
-            })),
+        () =>
+            movementRows
+                .filter((row) => row.inventory_item_id && row.exitQuantity > getAvailableStock(row.inventory_item_id))
+                .map((row) => ({
+                    id: row.inventory_item_id,
+                    name: getItemLabel(row.inventory_item_id),
+                    requested: row.exitQuantity,
+                    available: getAvailableStock(row.inventory_item_id)
+                })),
         [movementRows, inventoryItems]
     );
 
-    const hasActionableMovements = () =>
-        movementRows.some((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
+    const hasAnyValidMovement = useMemo(
+        () =>
+            movementRows.some(
+                (row) =>
+                    row.inventory_item_id &&
+                    (row.entryQuantity > 0 ||
+                        (row.exitQuantity > 0 && row.exitQuantity <= getAvailableStock(row.inventory_item_id)))
+            ),
+        [movementRows, inventoryItems]
+    );
 
-    const hasValidMovements = () =>
-        movementRows.some(
-            (row) =>
-                row.inventory_item_id &&
-                (row.entryQuantity > 0 || (row.exitQuantity > 0 && row.exitQuantity <= getAvailableStock(row.inventory_item_id)))
-        );
+    const hasActionableMovements = () => actionableRows.length > 0;
+
+    const validateMovements = () => {
+        if (zeroQuantityRows.length) {
+            const detail = zeroQuantityRows
+                .map((row) => getItemLabel(row.inventory_item_id))
+                .join(" | ");
+            toast.current?.show({
+                severity: "warn",
+                summary: "Cantidades pendientes",
+                detail: `Revisa las filas sin entradas ni salidas: ${detail}`,
+                life: 6000
+            });
+            return false;
+        }
+
+        if (!hasActionableMovements()) {
+            toast.current?.show({
+                severity: "warn",
+                summary: "Sin movimientos",
+                detail: "Agrega al menos una entrada o salida mayor a 0.",
+                life: 5000
+            });
+            return false;
+        }
+
+        return hasAnyValidMovement;
+    };
 
     useEffect(() => {
         if (data) {
@@ -147,33 +194,37 @@ function InventoryMovementPage() {
     const saveMovements = async () => {
         const userId = user?.id;
         if (userId === null || userId === undefined) return;
-        const actionableRows = movementRows.filter((row) => row.inventory_item_id && (row.entryQuantity > 0 || row.exitQuantity > 0));
-        const validRows = actionableRows.filter(
+        const actionableRowsCurrent = actionableRows;
+        const validRows = actionableRowsCurrent.filter(
             (row) => row.entryQuantity > 0 || (row.exitQuantity > 0 && row.exitQuantity <= getAvailableStock(row.inventory_item_id))
         );
 
         if (!validRows.length) {
-            // Check if failure is due to stock
-            const skippedDueToStock = actionableRows.some(row => row.exitQuantity > 0 && row.exitQuantity > getAvailableStock(row.inventory_item_id));
+            const skippedDueToStock = actionableRowsCurrent.some(
+                (row) => row.exitQuantity > 0 && row.exitQuantity > getAvailableStock(row.inventory_item_id)
+            );
 
             if (skippedDueToStock) {
-                 const skippedAll = actionableRows.filter(
+                const skippedAll = actionableRowsCurrent.filter(
                     (row) => row.exitQuantity > 0 && row.exitQuantity > getAvailableStock(row.inventory_item_id)
                 );
                 const detail = skippedAll
-                .map(
-                    (row) =>
-                        `${getItemLabel(row.inventory_item_id)} (solicitado: ${row.exitQuantity}, disponible: ${getAvailableStock(row.inventory_item_id)})`
-                )
-                .join(" | ");
+                    .map(
+                        (row) =>
+                            `${getItemLabel(row.inventory_item_id)} (solicitado: ${row.exitQuantity}, disponible: ${getAvailableStock(row.inventory_item_id)})`
+                    )
+                    .join(" | ");
                 toast.current?.show({ severity: "warn", summary: "Stock insuficiente", detail, life: 6000 });
-                // We throw error to keep dialog open and allow user to fix
-                throw new Error("Stock insuficiente para realizar los movimientos.");
+                const handledError = new Error("Stock insuficiente para realizar los movimientos.");
+                (handledError as any).suppressToast = true;
+                throw handledError;
             }
-            throw new Error("No hay movimientos válidos para procesar.");
+            const handledError = new Error("No hay movimientos válidos para procesar.");
+            (handledError as any).suppressToast = true;
+            throw handledError;
         }
 
-        const skippedForStock = actionableRows.filter(
+        const skippedForStock = actionableRowsCurrent.filter(
             (row) => row.exitQuantity > 0 && row.exitQuantity > getAvailableStock(row.inventory_item_id)
         );
 
@@ -219,11 +270,17 @@ function InventoryMovementPage() {
                         `${getItemLabel(row.inventory_item_id)} (solicitado: ${row.exitQuantity}, disponible: ${getAvailableStock(row.inventory_item_id)})`
                 )
                 .join(" | ");
-            toast.current?.show({ severity: "warn", summary: "Movimientos guardados con alertas", detail: `Algunos items no se procesaron por falta de stock: ${detail}`, life: 8000 });
-            return { data: { ...emptyInventoryMovement }, suppressMessage: true };
+            toast.current?.show({
+                severity: "warn",
+                summary: "Movimientos guardados con alertas",
+                detail: `Algunos items no se procesaron por falta de stock: ${detail}`,
+                life: 8000
+            });
+            return { data: { ...emptyInventoryMovement }, suppressMessage: true, skipListUpdate: true };
         }
 
-        return { data: { ...emptyInventoryMovement } };
+        toast.current?.show({ severity: "success", summary: "Movimientos guardados", detail: "El stock fue actualizado.", life: 5000 });
+        return { data: { ...emptyInventoryMovement }, suppressMessage: true, skipListUpdate: true };
     };
 
     const config: CrudDataTableConfig<InventoryMovement> = {
@@ -327,6 +384,14 @@ function InventoryMovementPage() {
                         />
                     )}
                     {showNoQuantityWarning && <Message severity="warn" text="Agrega al menos un movimiento con entrada o salida mayor a 0." />}
+                    {submitted && zeroQuantityRows.length > 0 && (
+                        <Message
+                            severity="warn"
+                            text={`Revisa las filas sin cantidades: ${zeroQuantityRows
+                                .map((row) => getItemLabel(row.inventory_item_id))
+                                .join(' | ')}`}
+                        />
+                    )}
                     <Message severity="info" text="Cada fila permite enviar entrada y/o salida para distintos artículos. Las cantidades empiezan en 0." />
                 </>
             );
@@ -334,7 +399,7 @@ function InventoryMovementPage() {
         getItemDisplayName: (movement) => movement.inventory_item || `Movimiento ${movement.id}`,
         emptyItem: emptyInventoryMovement,
         initialData: inventoryMovements,
-        validateItem: () => hasValidMovements(),
+        validateItem: () => validateMovements(),
         onSaveItem: async () => {
             return await saveMovements() as any;
         },

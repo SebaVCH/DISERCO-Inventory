@@ -1391,7 +1391,6 @@
   animation: dropdownSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Toast Styles */
 .p-toast {
   width: min(30rem, calc(100vw - 2rem));
   max-width: 30rem;

@@ -32,7 +32,7 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     initialData: T[];
     validateItem: (item: T) => boolean;
     onDeleteItem?: (id: number) => Promise<void>;
-    onSaveItem?: (item: T, isNew: boolean) => Promise<T | { data: T; suppressMessage?: boolean }>;
+    onSaveItem?: (item: T, isNew: boolean) => Promise<T | { data: T; suppressMessage?: boolean; skipListUpdate?: boolean }>;
     enableEditAction?: boolean;
     additionalActions?: (item: T) => ReactNode;
     enableCreateAction?: boolean;
@@ -106,10 +106,12 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
 
                 let savedItem: T;
                 let suppressMessage = false;
+                let skipListUpdate = false;
 
-                if (result && typeof result === 'object' && 'data' in result && 'suppressMessage' in result) {
+                if (result && typeof result === 'object' && 'data' in result) {
                     savedItem = (result as { data: T }).data;
-                    suppressMessage = (result as { suppressMessage: boolean }).suppressMessage;
+                    suppressMessage = Boolean((result as { suppressMessage?: boolean }).suppressMessage);
+                    skipListUpdate = Boolean((result as { skipListUpdate?: boolean }).skipListUpdate);
                 } else {
                     savedItem = result as T;
                 }
@@ -117,16 +119,18 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 const updatedItems = [...items];
                 const updatedItem = { ...savedItem };
 
-                if (!isNew) {
-                    const index = findIndexById(item.id);
-                    if (index !== -1) {
-                        updatedItems[index] = updatedItem;
+                if (!skipListUpdate) {
+                    if (!isNew) {
+                        const index = findIndexById(item.id);
+                        if (index !== -1) {
+                            updatedItems[index] = updatedItem;
+                        }
+                    } else {
+                        updatedItems.push(updatedItem);
                     }
-                } else {
-                    updatedItems.push(updatedItem);
-                }
 
-                setItems(updatedItems);
+                    setItems(updatedItems);
+                }
 
                 if (!suppressMessage) {
                     toast.current?.show({
@@ -139,13 +143,16 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
 
                 setItemDialog(false);
                 setItem(emptyItem);
-            } catch (_error) {
-                toast.current?.show({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: `No se pudo ${!item.id ? 'crear' : 'actualizar'} el registro`,
-                    life: 3000
-                });
+            } catch (error: unknown) {
+                const isHandled = Boolean((error as { suppressToast?: boolean })?.suppressToast);
+                if (!isHandled) {
+                    toast.current?.show({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: `No se pudo ${!item.id ? 'crear' : 'actualizar'} el registro`,
+                        life: 3000
+                    });
+                }
             } finally {
                 setIsSaving(false);
             }
