@@ -41,6 +41,8 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     toolbarLeftContent?: ReactNode;
     toolbarRightContent?: ReactNode;
     enableColumnToggle?: boolean;
+    lockedColumnKeys?: string[];
+    wrapperClassName?: string;
 }
 
 interface CrudDataTableProps<T extends BaseEntity> {
@@ -66,7 +68,11 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         toolbarLeftContent,
         toolbarRightContent,
         enableColumnToggle = false,
+        lockedColumnKeys = [],
+        wrapperClassName,
     } = config;
+
+    const lockedColumnSet = new Set(lockedColumnKeys);
 
     const [items, setItems] = useState<T[]>(initialData);
     const [itemDialog, setItemDialog] = useState<boolean>(false);
@@ -81,34 +87,41 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     const dt = useRef<DataTable<T[]>>(null);
     const columnMenuRef = useRef<Menu>(null);
 
-    // Estado para controlar la visibilidad de las columnas
     const [visibleColumns, setVisibleColumns] = useState<{ [key: string]: boolean }>(() => {
-        // Intentar cargar las preferencias desde localStorage
         const storageKey = `columnVisibility_${title.replace(/\s+/g, '_')}`;
         const savedPreferences = localStorage.getItem(storageKey);
 
+        let visibility: { [key: string]: boolean };
+
         if (savedPreferences) {
-            return JSON.parse(savedPreferences);
+            visibility = JSON.parse(savedPreferences);
+        } else {
+            visibility = {};
+            columns.forEach((col, index) => {
+                const key = col.field || col.header?.toString() || `column_${index}`;
+                visibility[key] = true;
+            });
         }
 
-        // Por defecto, todas las columnas son visibles
-        const initialVisibility: { [key: string]: boolean } = {};
-        columns.forEach((col, index) => {
-            const key = col.field || col.header?.toString() || `column_${index}`;
-            initialVisibility[key] = true;
+        lockedColumnKeys.forEach((key) => {
+            visibility[key] = true;
         });
-        return initialVisibility;
+
+        return visibility;
     });
 
     useEffect(() => {
         setItems(initialData);
     }, [initialData]);
 
-    // Persistir preferencias de columnas en localStorage
     useEffect(() => {
         const storageKey = `columnVisibility_${title.replace(/\s+/g, '_')}`;
-        localStorage.setItem(storageKey, JSON.stringify(visibleColumns));
-    }, [visibleColumns, title]);
+        const toSave = { ...visibleColumns };
+        lockedColumnKeys.forEach((key) => {
+            toSave[key] = true;
+        });
+        localStorage.setItem(storageKey, JSON.stringify(toSave));
+    }, [visibleColumns, title, lockedColumnKeys]);
 
     const openNew = () => {
         setItem(emptyItem);
@@ -213,7 +226,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 detail: `${entityName} Eliminado`,
                 life: 3000
             });
-        } catch (_error) {
+        } catch {
             toast.current?.show({
                 severity: 'error',
                 summary: 'Error',
@@ -257,6 +270,9 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     };
 
     const toggleColumnVisibility = (columnKey: string) => {
+        if (lockedColumnSet.has(columnKey)) {
+            return;
+        }
         setVisibleColumns(prev => ({
             ...prev,
             [columnKey]: !prev[columnKey]
@@ -267,7 +283,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         const newVisibility: { [key: string]: boolean } = {};
         columns.forEach((col, index) => {
             const key = col.field || col.header?.toString() || `column_${index}`;
-            newVisibility[key] = visible;
+            newVisibility[key] = lockedColumnSet.has(key) ? true : visible;
         });
         setVisibleColumns(newVisibility);
     };
@@ -327,9 +343,9 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     };
 
     const header = (
-        <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
+        <div className="crud-datatable-header flex flex-wrap gap-2 align-items-center justify-content-between">
             <h4 className="m-0">{title}</h4>
-            <div className="flex gap-2 align-items-center">
+            <div className="crud-datatable-header-actions flex gap-2 align-items-center">
                 {enableColumnToggle && (
                     <Button
                         icon="pi pi-table"
@@ -337,6 +353,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                         outlined
                         tooltip="Mostrar/Ocultar Columnas"
                         tooltipOptions={{ position: 'top' }}
+                        className="column-toggle-button"
                         onClick={(e) => columnMenuRef.current?.toggle(e)}
                     />
                 )}
@@ -369,16 +386,17 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     );
 
     return (
-        <div>
+        <div className={wrapperClassName}>
             <Toast ref={toast} />
             <Menu
                 ref={columnMenuRef}
                 popup
+                className="column-toggle-menu"
                 model={[
                     {
                         template: () => (
-                            <div className="p-3" style={{ minWidth: '250px' }}>
-                                <div className="flex align-items-center justify-content-between mb-3">
+                            <div className="column-toggle-content p-3">
+                                <div className="flex align-items-center justify-content-between mb-3 sticky top-0 bg-white">
                                     <span className="font-bold">Columnas Visibles</span>
                                     <Button
                                         label="Todas"
@@ -391,15 +409,21 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                                     {columns.map((col, index) => {
                                         const columnKey = getColumnKey(col, index);
                                         const columnLabel = col.header?.toString() || `Columna ${index + 1}`;
+                                        const isLocked = lockedColumnSet.has(columnKey);
+                                        const isChecked = isLocked || (visibleColumns[columnKey] ?? true);
                                         return (
                                             <div key={columnKey} className="flex align-items-center">
                                                 <Checkbox
                                                     inputId={`col-${columnKey}`}
-                                                    checked={visibleColumns[columnKey] ?? true}
+                                                    checked={isChecked}
+                                                    disabled={isLocked}
                                                     onChange={() => toggleColumnVisibility(columnKey)}
                                                 />
-                                                <label htmlFor={`col-${columnKey}`} className="ml-2 cursor-pointer">
-                                                    {columnLabel}
+                                                <label
+                                                    htmlFor={`col-${columnKey}`}
+                                                    className={`ml-2 ${isLocked ? 'column-locked-label' : 'cursor-pointer'}`}
+                                                >
+                                                    {columnLabel}{isLocked && ' (Fijo)'}
                                                 </label>
                                             </div>
                                         );
@@ -439,7 +463,9 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 >
                     {columns.map((col, index) => {
                         const columnKey = getColumnKey(col, index);
-                        if (!visibleColumns[columnKey] && visibleColumns[columnKey] !== undefined) {
+                        const isLocked = lockedColumnSet.has(columnKey);
+                        const isVisible = isLocked || (visibleColumns[columnKey] ?? true);
+                        if (!isVisible) {
                             return null;
                         }
                         return <Column key={index} {...col} />;

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import List
 
 from internal.domain.user import User
 from internal.infrastructure.database.db import get_db
@@ -37,13 +38,7 @@ def profile(db: Session = Depends(get_db), user: User = Depends(get_current_user
     existing_user = db.query(User).filter(User.id == user.id).first()
     return existing_user
 
-@router.get("/get-users")
+@router.get("/get-users", response_model=List[AppUserRead])
 def get_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
+    users = db.query(User).filter(User.id != 0).all()
     return users
-
-@router.delete("/delete-user/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
-    db.query(User).filter(User.id == user_id).update({"is_deleted": True})
-    db.commit()
-    return {"Usuario eliminado"}

@@ -98,6 +98,8 @@ function Inventory() {
         title: 'Gestión de inventario',
         toolbarRightContent: statusFilterControl,
         enableColumnToggle: true,
+        wrapperClassName: 'inventory-crud-table',
+        lockedColumnKeys: ['name', 'section_name', 'current_stock'],
         columns: [
             { field: 'id', header: 'Código', sortable: true, style: { minWidth: '5rem' } },
             { field: 'section_name', header: 'Sección', sortable: true, style: { minWidth: '7rem' } },
