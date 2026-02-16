@@ -35,7 +35,16 @@ function Auth() {
             navigate('/inventory');
         },
         onError: (err: any) => {
-            setLoginError(err?.response?.data?.detail ?? 'Error al iniciar sesión');
+            let errorMsg = 'Error al iniciar sesión';
+            if (err?.response?.data?.detail) {
+                const detail = err.response.data.detail;
+                if (typeof detail === 'string') {
+                    errorMsg = detail;
+                } else if (Array.isArray(detail)) {
+                    errorMsg = detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ');
+                }
+            }
+            setLoginError(errorMsg);
         }
     });
 
@@ -47,7 +56,16 @@ function Auth() {
             navigate('/inventory');
         },
         onError: (err: any) => {
-            setRegisterError(err?.response?.data?.detail ?? 'Error al registrar usuario');
+            let errorMsg = 'Error al registrar usuario';
+            if (err?.response?.data?.detail) {
+                const detail = err.response.data.detail;
+                if (typeof detail === 'string') {
+                    errorMsg = detail;
+                } else if (Array.isArray(detail)) {
+                    errorMsg = detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ');
+                }
+            }
+            setRegisterError(errorMsg);
         }
     });
 

@@ -395,33 +395,47 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 model={[
                     {
                         template: () => (
-                            <div className="column-toggle-content p-3">
-                                <div className="flex align-items-center justify-content-between mb-3 sticky top-0 bg-white">
+                            <div
+                                className="column-toggle-content p-3"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                }}
+                            >
+                                <div className="column-toggle-header mb-3">
                                     <span className="font-bold">Columnas Visibles</span>
-                                    <Button
-                                        label="Todas"
-                                        size="small"
-                                        text
-                                        onClick={() => toggleAllColumns(true)}
-                                    />
                                 </div>
-                                <div className="flex flex-column gap-2">
+                                <div className="column-toggle-list">
                                     {columns.map((col, index) => {
                                         const columnKey = getColumnKey(col, index);
                                         const columnLabel = col.header?.toString() || `Columna ${index + 1}`;
                                         const isLocked = lockedColumnSet.has(columnKey);
                                         const isChecked = isLocked || (visibleColumns[columnKey] ?? true);
                                         return (
-                                            <div key={columnKey} className="flex align-items-center">
+                                            <div
+                                                key={columnKey}
+                                                className={`column-toggle-item ${isLocked ? 'locked' : ''}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (!isLocked) {
+                                                        toggleColumnVisibility(columnKey);
+                                                    }
+                                                }}
+                                            >
                                                 <Checkbox
                                                     inputId={`col-${columnKey}`}
                                                     checked={isChecked}
                                                     disabled={isLocked}
-                                                    onChange={() => toggleColumnVisibility(columnKey)}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation?.();
+                                                    }}
                                                 />
                                                 <label
                                                     htmlFor={`col-${columnKey}`}
-                                                    className={`ml-2 ${isLocked ? 'column-locked-label' : 'cursor-pointer'}`}
+                                                    className={`column-label ${isLocked ? 'locked' : ''}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                    }}
                                                 >
                                                     {columnLabel}{isLocked && ' (Fijo)'}
                                                 </label>

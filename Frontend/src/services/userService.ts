@@ -10,7 +10,11 @@ const userAPI = {
     },
 
     register: async (payload: RegisterPayload): Promise<TokenResponse> => {
-        const response = await axiosInstance.post(`${userPath}/register`,payload);
+        const response = await axiosInstance.post(`${userPath}/register`, {
+            email: payload.email,
+            full_name: payload.full_name,
+            password_hash: payload.password
+        });
         return response.data;
     },
 
