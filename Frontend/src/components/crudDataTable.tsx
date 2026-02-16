@@ -279,15 +279,6 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         }));
     };
 
-    const toggleAllColumns = (visible: boolean) => {
-        const newVisibility: { [key: string]: boolean } = {};
-        columns.forEach((col, index) => {
-            const key = col.field || col.header?.toString() || `column_${index}`;
-            newVisibility[key] = lockedColumnSet.has(key) ? true : visible;
-        });
-        setVisibleColumns(newVisibility);
-    };
-
     const getColumnKey = (col: ColumnProps, index: number): string => {
         return col.field || col.header?.toString() || `column_${index}`;
     };
