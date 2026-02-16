@@ -187,7 +187,7 @@ function InventoryMovementPage() {
         updateRow(rowKey, (row) => ({ ...row, observation: text }));
     };
 
-    const handleQuantityChange = (rowKey: string, value: number | null, field: 'entryQuantity' | 'exitQuantity') => {
+    const handleQuantityChange = (rowKey: string, value: number | null | undefined, field: 'entryQuantity' | 'exitQuantity') => {
         updateRow(rowKey, (row) => ({ ...row, [field]: value ?? 0 }));
     };
 

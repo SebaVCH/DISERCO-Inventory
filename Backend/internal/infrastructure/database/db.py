@@ -2,8 +2,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from internal.domain import Base,inventory_item_maintenance,report_inventory_item,inventory_item,inventory_movement,section,report,maintenance,notification_subscription,user
+from internal.utils.setup_env import DBURL, SetupEnv
 
-engine = create_engine('sqlite:///DISERCO-DB')
+SetupEnv()
+# engine = create_engine('sqlite:///DISERCO-DB')
+engine = create_engine(DBURL)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 def StartDB():
