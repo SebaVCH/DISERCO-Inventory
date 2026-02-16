@@ -43,7 +43,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 def encrypt_password(password):
     secured_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-    return secured_password
+    return secured_password.decode("utf-8")
 
 def verify_password(password, hashed_password):
     return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
