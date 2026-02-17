@@ -47,3 +47,12 @@ def encrypt_password(password):
 
 def verify_password(password, hashed_password):
     return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+def validate_token(token):
+    if not token:
+        return False
+    try:
+        decode_token(token)
+        return True
+    except (jwt.InvalidTokenError, TypeError):
+        return False

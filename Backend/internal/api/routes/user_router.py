@@ -9,7 +9,10 @@ from internal.schemas.user_schema import TokenResponse, AppUserRead, AppUserCrea
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-@router.post("/login", response_model=TokenResponse)
+public_router = APIRouter(prefix="/user", tags=["user"])
+private_router = APIRouter(prefix="/user", tags=["user"])
+
+@public_router.post("/login", response_model=TokenResponse)
 def login(user: AppUserLogin,db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
     if not existing_user or not verify_password(user.password, existing_user.password_hash):
@@ -18,7 +21,7 @@ def login(user: AppUserLogin,db: Session = Depends(get_db)):
     token = create_token(existing_user)
     return {"access_token": token, "token_type": "bearer"}
 
-@router.post("/register", response_model=TokenResponse)
+@public_router.post("/register", response_model=TokenResponse)
 def register(user: AppUserCreate,db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
@@ -33,12 +36,12 @@ def register(user: AppUserCreate,db: Session = Depends(get_db)):
     token = create_token(new_user)
     return {"access_token": token, "token_type": "bearer"}
 
-@router.get("/profile", response_model=AppUserRead)
+@private_router.get("/profile", response_model=AppUserRead)
 def profile(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     existing_user = db.query(User).filter(User.id == user.id).first()
     return existing_user
 
-@router.get("/get-users", response_model=List[AppUserRead])
+@private_router.get("/get-users", response_model=List[AppUserRead])
 def get_users(db: Session = Depends(get_db)):
     users = db.query(User).filter(User.id != 0).all()
     return users
