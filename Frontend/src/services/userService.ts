@@ -9,7 +9,7 @@ const userAPI = {
         return response.data;
     },
 
-    register: async (payload: RegisterPayload): Promise<TokenResponse> => {
+    register: async (payload: RegisterPayload): Promise<User> => {
         const response = await axiosInstance.post(`${userPath}/register`, {
             email: payload.email,
             full_name: payload.full_name,

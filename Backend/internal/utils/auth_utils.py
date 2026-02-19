@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -32,11 +32,13 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     try:
         payload = decode_token(token)
         email = payload.get("email")
+        user_id = payload.get("id")
         if not isinstance(email,str):
             raise HTTPException(status_code=401, detail="Token invalido")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token invalido")
-    user = db.query(User).filter(User.email == email).first()
+
+    user = db.query(User).filter(User.email == email, User.id == user_id, User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return user
@@ -56,3 +58,13 @@ def validate_token(token):
         return True
     except (jwt.InvalidTokenError, TypeError):
         return False
+
+def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+    user = get_current_user(credentials, db)
+    if user.id != 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permisos para realizar esta acción. Solo el administrador puede registrar nuevos usuarios."
+        )
+    return user
+

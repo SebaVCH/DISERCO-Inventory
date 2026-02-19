@@ -6,23 +6,24 @@ import Report from "./pages/report.tsx";
 import Maintenance from "./pages/maintenance.tsx";
 import Section from "./pages/section.tsx";
 import Notification from "./pages/notification.tsx";
-import Auth from "./pages/auth.tsx";
+import Login from "./pages/login.tsx";
+import Register from "./pages/register.tsx";
 import useUserStore from "./store/useUserStore.ts";
 
 const ProtectedLayout = () => {
     const { isAuthenticated } = useUserStore();
     if (!isAuthenticated) {
-        return <Navigate to="/auth" replace />;
+        return <Navigate to="/login" replace />;
     }
     return <App />;
 };
 
-const AuthRedirect = () => {
+const LoginRedirect = () => {
     const { isAuthenticated } = useUserStore();
     if (isAuthenticated) {
         return <Navigate to="/inventory" replace />;
     }
-    return <Auth />;
+    return <Login />;
 };
 
 export const router = createBrowserRouter([
@@ -59,13 +60,17 @@ export const router = createBrowserRouter([
                 element: <Notification />,
             },
             {
+                path: "register",
+                element: <Register />,
+            },
+            {
                 path: "*",
                 element: <Navigate to="/inventory" replace />,
             }
         ],
     },
     {
-        path: "/auth",
-        element: <AuthRedirect />,
+        path: "/login",
+        element: <LoginRedirect />,
     },
 ]);

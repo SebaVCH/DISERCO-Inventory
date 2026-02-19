@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './header.css';
 import useUserStore from "../store/useUserStore.ts";
 import userAPI from "../services/userService.ts";
+import { Button } from 'primereact/button';
 
 function Header() {
     const navigate = useNavigate();
@@ -24,10 +25,10 @@ function Header() {
         { label: 'Cerrar sesión', icon: 'pi pi-sign-out', command: () => {
                 userAPI.logout();
                 clearSession();
-                navigate('/auth');
+                navigate('/login');
             } }
     ] : [
-        { label: 'Iniciar sesión / Registrar', icon: 'pi pi-user', command: () => navigate('/auth') }
+        { label: 'Iniciar sesión', icon: 'pi pi-user', command: () => navigate('/login') }
     ];
 
     const getActiveIndex = () => {
@@ -43,6 +44,8 @@ function Header() {
         return pathToIndex[location.pathname] ?? 0;
     };
 
+    const isAdmin = user?.id === 0;
+
     return (
         <div className="header-container">
             <div className="header-wrapper">
@@ -50,6 +53,15 @@ function Header() {
                     <TabMenu model={leftItems} activeIndex={getActiveIndex()} />
                 </div>
                 <div className="header-right">
+                    {isAdmin && isAuthenticated && (
+                        <Button
+                            label="Registrar Usuario"
+                            icon="pi pi-user-plus"
+                            severity="success"
+                            onClick={() => navigate('/register')}
+                            style={{ marginRight: '1rem' }}
+                        />
+                    )}
                     <TabMenu model={rightItems} />
                 </div>
             </div>
