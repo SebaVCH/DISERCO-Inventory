@@ -4,7 +4,6 @@ import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
-import TableSkeleton from '../components/TableSkeleton.tsx';
 import { classNames } from 'primereact/utils';
 import CrudDataTable, { type CrudDataTableConfig } from '../components/crudDataTable.tsx';
 import { useMaintenance } from '../hooks/useMaintenance.ts';
@@ -251,6 +250,8 @@ function MaintenancePage() {
         emptyItem: { id: 0, description: '', created_at: '', items: [] },
         initialData: maintenanceRecords,
         validateItem: () => hasValidItems,
+        isLoading: isLoading || isInventoryLoading,
+        skeletonRows: 6,
         onSaveItem: async () => saveMaintenance(),
         onDeleteItem: async (id: number) => {
             await maintenanceAPI.deleteMaintenance(id);
@@ -259,9 +260,6 @@ function MaintenancePage() {
         enableEditAction: false,
     };
 
-    if (isLoading || isInventoryLoading) {
-        return <TableSkeleton rows={6} columns={4} />;
-    }
 
     if (isError || isInventoryError) {
         return <Message severity="error" text="Error al cargar mantenimientos" />;

@@ -12,6 +12,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { Menu } from 'primereact/menu';
 import { Checkbox } from 'primereact/checkbox';
+import { Skeleton } from 'primereact/skeleton';
 
 export interface BaseEntity {
     id: number;
@@ -43,6 +44,8 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     enableColumnToggle?: boolean;
     lockedColumnKeys?: string[];
     wrapperClassName?: string;
+    isLoading?: boolean;
+    skeletonRows?: number;
 }
 
 interface CrudDataTableProps<T extends BaseEntity> {
@@ -70,6 +73,8 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         enableColumnToggle = false,
         lockedColumnKeys = [],
         wrapperClassName,
+        isLoading = false,
+        skeletonRows = 5,
     } = config;
 
     const lockedColumnSet = new Set(lockedColumnKeys);
@@ -376,6 +381,9 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         </React.Fragment>
     );
 
+    const skeletonData = Array.from({ length: skeletonRows }, (_, i) => ({ id: i + 1 } as T));
+    const skeletonBodyTemplate = () => <Skeleton width="75%" height="1.2rem" />;
+
     return (
         <div className={wrapperClassName}>
             <Toast ref={toast} />
@@ -448,7 +456,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
 
                 <DataTable
                     ref={dt}
-                    value={items}
+                    value={isLoading ? skeletonData : items}
                     selection={selectedItems}
                     selectionMode="multiple"
                     onSelectionChange={(e) => {
@@ -473,9 +481,9 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                         if (!isVisible) {
                             return null;
                         }
-                        return <Column key={index} {...col} />;
+                        return <Column key={index} {...col} body={isLoading ? skeletonBodyTemplate : col.body} />;
                     })}
-                    <Column header="Acciones" body={actionBodyTemplate} exportable={false} style={{ minWidth: '8rem' }} />
+                    <Column header="Acciones" body={isLoading ? skeletonBodyTemplate : actionBodyTemplate} exportable={false} style={{ minWidth: '8rem' }} />
                 </DataTable>
             </div>
 

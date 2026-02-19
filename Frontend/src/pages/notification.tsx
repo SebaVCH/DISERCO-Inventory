@@ -2,7 +2,6 @@ import type React from 'react';
 import {useEffect, useMemo, useState} from 'react';
 import {Dropdown, type DropdownChangeEvent} from 'primereact/dropdown';
 import {classNames} from 'primereact/utils';
-import TableSkeleton from '../components/TableSkeleton.tsx';
 import {Message} from 'primereact/message';
 import CrudDataTable, {type CrudDataTableConfig} from '../components/crudDataTable.tsx';
 import {useNotificationSubscriptions} from '../hooks/useNotificationSubscription.ts';
@@ -61,6 +60,8 @@ function NotificationPage() {
         emptyItem: emptySubscription,
         initialData: subscriptions,
         validateItem: (subscription) => subscription.user_id > 0,
+        isLoading: isLoadingSubscriptions || isLoadingUsers,
+        skeletonRows: 5,
         enableEditAction: false,
         enableCreateAction: eligibleUsers.length > 0,
         onSaveItem: async (subscription, isNew) => {
@@ -79,9 +80,6 @@ function NotificationPage() {
         },
     };
 
-    if (isLoadingSubscriptions || isLoadingUsers) {
-        return <TableSkeleton rows={5} columns={3} />;
-    }
 
     if (isErrorSubscriptions || isErrorUsers) {
         return <Message severity="error" text="Error al cargar las suscripciones de notificaciones" />;

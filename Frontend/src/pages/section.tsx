@@ -5,7 +5,6 @@ import type { CrudDataTableConfig } from '../components/crudDataTable.tsx';
 import type { Section } from '../types/section';
 import {useSection} from "../hooks/useSection.ts";
 import {useEffect, useState} from "react";
-import TableSkeleton from "../components/TableSkeleton.tsx";
 import {Message} from "primereact/message";
 import sectionAPI from "../services/sectionService.ts";
 import { useQueryClient } from "@tanstack/react-query";
@@ -52,6 +51,8 @@ function SectionPage() {
         emptyItem: emptySection,
         initialData: sections,
         validateItem: (section) => section.name.trim() !== '',
+        isLoading: isLoading,
+        skeletonRows: 4,
         onSaveItem: async (section, isNew) => {
             if (isNew) {
                 const created = await sectionAPI.createSection({ name: section.name });
@@ -68,9 +69,6 @@ function SectionPage() {
         },
     };
 
-    if (isLoading) {
-        return <TableSkeleton rows={4} columns={2} />;
-    }
 
     if (isError) {
         return <Message severity="error" text="Error al cargar el inventario" />;

@@ -5,7 +5,6 @@ import CrudDataTable from '../components/crudDataTable.tsx';
 import type { CrudDataTableConfig } from '../components/crudDataTable.tsx';
 import type { InventoryItem } from '../types/inventoryItem.ts';
 import { useEffect, useState } from "react";
-import TableSkeleton from "../components/TableSkeleton.tsx";
 import { Message } from "primereact/message";
 import { useInventory } from "../hooks/useInventory.ts";
 import { SelectButton } from "primereact/selectbutton";
@@ -204,6 +203,8 @@ function Inventory() {
         emptyItem: emptyInventoryItem,
         initialData: inventoryItems,
         validateItem: (item) => item.name.trim() !== '',
+        isLoading: isLoading,
+        skeletonRows: 8,
         onDeleteItem: async (id: number) => {
             await inventoryItemAPI.deleteItem(id);
             await refetch();
@@ -244,9 +245,6 @@ function Inventory() {
         },
     };
 
-    if (isLoading) {
-        return <TableSkeleton rows={8} columns={5} />;
-    }
 
     if (isError) {
         return <Message severity="error" text="Error al cargar el inventario" />;

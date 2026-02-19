@@ -9,7 +9,6 @@ import {useInventory, useInventoryMovement} from "../hooks/useInventory.ts";
 import inventoryItemAPI from "../services/inventoryItemService.ts";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {Toast} from "primereact/toast";
-import TableSkeleton from "../components/TableSkeleton.tsx";
 import {Message} from "primereact/message";
 import useUserStore from "../store/useUserStore.ts";
 
@@ -400,6 +399,8 @@ function InventoryMovementPage() {
         emptyItem: emptyInventoryMovement,
         initialData: inventoryMovements,
         validateItem: () => validateMovements(),
+        isLoading: isLoading,
+        skeletonRows: 7,
         onSaveItem: async () => {
             return await saveMovements() as any;
         },
@@ -409,9 +410,6 @@ function InventoryMovementPage() {
         },
         enableEditAction: false,
     };
-    if (isLoading) {
-        return <TableSkeleton rows={7} columns={5} />;
-    }
 
     if (isError) {
         return <Message severity="error" text="Error al cargar el inventario" />;

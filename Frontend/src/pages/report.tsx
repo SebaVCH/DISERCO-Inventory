@@ -6,7 +6,6 @@ import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
-import TableSkeleton from "../components/TableSkeleton.tsx";
 import type { Report } from "../types/report.ts";
 import { useReports } from "../hooks/useReport.ts";
 import reportAPI from "../services/reportService.ts";
@@ -123,7 +122,10 @@ function ReportPage() {
             frequency: 'manual',
         },
         initialData: reports,
+        isLoading: isLoading,
+        skeletonRows: 5,
         validateItem: () => {
+
             if (user?.id === null || user?.id === undefined) {
                 toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Debe iniciar sesión para crear reportes', life: 3000 });
                 return false;
@@ -177,9 +179,6 @@ function ReportPage() {
         ),
     };
 
-    if (isLoading) {
-        return <TableSkeleton rows={5} columns={4} />;
-    }
 
     if (isError) {
         return <Message severity="error" text="Error al cargar los reportes" />;
