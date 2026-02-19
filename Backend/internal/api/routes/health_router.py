@@ -5,6 +5,6 @@ from internal.infrastructure.database.db import get_db
 
 router = APIRouter(prefix="/health", tags=["health"])
 @router.head("", status_code=200)
-def health_check(db: Session = Depends(get_db())):
+def health_check(db: Session = Depends(get_db)):
     db.execute("SELECT 1")
     return {"status": "ok"}
