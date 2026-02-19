@@ -6,7 +6,12 @@ from internal.utils.setup_env import DBURL, SetupEnv
 
 SetupEnv()
 # engine = create_engine('sqlite:///DISERCO-DB')
-engine = create_engine(DBURL,connect_args={"options": "-c timezone=America/Santiago"})
+engine = create_engine(
+    DBURL,
+    connect_args={"options": "-c timezone=America/Santiago"},
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 def StartDB():
