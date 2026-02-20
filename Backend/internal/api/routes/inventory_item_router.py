@@ -1,4 +1,5 @@
 from zoneinfo import ZoneInfo
+import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import update
@@ -62,6 +63,17 @@ def create_inventory_item_exit(inventory_item_movement_data: InventoryMovementCr
             {"current_stock": InventoryItem.current_stock - inventory_item_movement_data.quantity,
              "total_exits": InventoryItem.total_exits + inventory_item_movement_data.quantity}
         )
+
+        pattern = r"Persona a cargo:\s*([a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+)"
+        match = re.search(pattern, new_inventory_item_exit.observation)
+        if match:
+            person_name = match.group(1).strip()
+            tool_item = db.query(InventoryItem).filter(InventoryItem.id == item_id,InventoryItem.is_tool == True).first()
+            if tool_item:
+                tool_item.comments = f"Última salida el {new_inventory_item_exit.created_at.strftime('%Y-%m-%d %H:%M:%S')}, persona a cargo: {person_name}"
+        else:
+            print("No se encontró el nombre de la persona en la observación.")
+
         db.commit()
         db.refresh(new_inventory_item_exit)
     except Exception as e:
