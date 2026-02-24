@@ -1778,3 +1778,12 @@
   }
 }
 
+.p-datatable .p-datatable-tbody > tr.row-deleted > td {
+  background-color: #fee2e2 !important;
+  color: #7f1d1d !important;
+}
+
+.p-datatable .p-datatable-tbody > tr.row-deleted:hover > td {
+  background-color: #fecaca !important;
+  color: #7f1d1d !important;
+}

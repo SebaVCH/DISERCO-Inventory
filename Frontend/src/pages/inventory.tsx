@@ -11,7 +11,7 @@ import { SelectButton } from "primereact/selectbutton";
 import { InputNumber } from "primereact/inputnumber";
 import inventoryItemAPI from "../services/inventoryItemService.ts";
 import { Dropdown, type DropdownChangeEvent } from "primereact/dropdown";
-import { useSection } from "../hooks/useSection.ts";
+import {useUndeletedSection} from "../hooks/useSection.ts";
 import type { Section } from "../types/section";
 import { queryClient } from "../lib/queryClient.ts";
 
@@ -52,7 +52,8 @@ function Inventory() {
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
     const criticalStockOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
     const isToolOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
-    const { data: sections = [] } = useSection();
+    const isDeletedOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
+    const { data: sections = [] } = useUndeletedSection();
     const sectionOptions = [{ label: 'Sin sección', value: null }, ...(sections?.map?.((section: Section) => ({ label: section.name, value: section.id })) || [])];
     const statusOptions = [
         { label: 'Todos', value: 'all' },
@@ -197,6 +198,18 @@ function Inventory() {
                         }
                     />
                 </div>
+                {item.id !== 0 && (
+                    <div className="field dialog-field">
+                        <label htmlFor="is_deleted" className="font-bold">¿Está eliminado?</label>
+                        <SelectButton
+                            id="is_deleted"
+                            className="critical-stock-toggle"
+                            value={item.is_deleted === true}
+                            onChange={(e) => onInputChange({ target: { value: e.value === true } } as unknown as React.ChangeEvent<HTMLInputElement>, 'is_deleted')}
+                            options={isDeletedOptions}
+                        />
+                    </div>
+                )}
             </div>
         ),
         getItemDisplayName: (item) => item.name,
@@ -209,6 +222,7 @@ function Inventory() {
             await inventoryItemAPI.deleteItem(id);
             await refetch();
         },
+        rowClassName: (item: InventoryItem) => ({ 'row-deleted': item.is_deleted }),
         onSaveItem: async (item, isNew) => {
             const normalizedSectionId = normalizeSectionId(item.section_id);
             const payload = {
@@ -219,6 +233,7 @@ function Inventory() {
                 comments: item.comments,
                 section_id: normalizedSectionId,
                 is_tool: item.is_tool,
+                ...(isNew ? {} : { is_deleted: item.is_deleted }),
             };
 
             if (isNew) {

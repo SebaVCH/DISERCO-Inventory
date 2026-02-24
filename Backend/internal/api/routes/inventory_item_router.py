@@ -96,6 +96,11 @@ def update_inventory_item(inventory_item_id: int,data: dict ,db: Session = Depen
     existing_item = db.query(InventoryItem).filter(InventoryItem.id == inventory_item_id).first()
     if not existing_item:
         raise HTTPException(status_code=404, detail="Elemento no encontrado")
+    if "is_deleted" in data:
+        if data["is_deleted"]:
+            data.setdefault("deleted_at", datetime.now(ZoneInfo("America/Santiago")))
+        else:
+            data["deleted_at"] = None
     db.execute(update(InventoryItem).filter_by(id=inventory_item_id).values(**data))
     db.commit()
     return {"Elemento actualizado"}

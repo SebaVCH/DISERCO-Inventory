@@ -14,7 +14,12 @@ const sectionAPI = {
         return response.data;
     },
 
-    updateSection: async (id: number, data : {name : string}): Promise<Section> => {
+    getUndeletedSections: async (): Promise<Section[]> => {
+        const response = await axiosInstance.get(`${sectionPath}/undeleted`);
+        return response.data;
+    },
+
+    updateSection: async (id: number, data : {name?: string; is_deleted?: boolean}): Promise<Section> => {
         const response = await axiosInstance.put(`${sectionPath}/${id}`, data);
         return response.data;
     },

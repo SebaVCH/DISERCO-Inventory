@@ -7,3 +7,10 @@ export const useSection = () => {
         queryFn: sectionAPI.getSections
     })
 }
+
+export const useUndeletedSection = () => {
+    return useQuery({
+        queryKey: ['undeletedSection'],
+        queryFn: sectionAPI.getUndeletedSections
+    })
+}

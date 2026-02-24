@@ -8,11 +8,15 @@ import {useEffect, useState} from "react";
 import {Message} from "primereact/message";
 import sectionAPI from "../services/sectionService.ts";
 import { useQueryClient } from "@tanstack/react-query";
+import { SelectButton } from "primereact/selectbutton";
 
 const emptySection: Section = {
     id: 0,
     name: "",
+    is_deleted: false,
 };
+
+const isDeletedOptions = [{ label: 'No', value: false }, { label: 'Sí', value: true }];
 
 function SectionPage() {
     const queryClient = useQueryClient();
@@ -45,6 +49,18 @@ function SectionPage() {
                     className={classNames({ 'p-invalid': submitted && !section.name })}
                 />
                 {submitted && !section.name && <small className="p-error">El nombre es requerido.</small>}
+                {section.id !== 0 && (
+                    <div className="field" style={{ marginTop: '1rem' }}>
+                        <label htmlFor="is_deleted" className="font-bold">¿Está eliminado?</label>
+                        <SelectButton
+                            id="is_deleted"
+                            className="critical-stock-toggle"
+                            value={section.is_deleted === true}
+                            options={isDeletedOptions}
+                            onChange={(e) => onInputChange({ target: { value: e.value === true } } as unknown as React.ChangeEvent<HTMLInputElement>, 'is_deleted')}
+                        />
+                    </div>
+                )}
             </div>
         ),
         getItemDisplayName: (section) => section.name,
@@ -59,7 +75,7 @@ function SectionPage() {
                 await queryClient.invalidateQueries({ queryKey: ['section'] });
                 return created;
             }
-            await sectionAPI.updateSection(section.id, { name: section.name });
+            await sectionAPI.updateSection(section.id, { name: section.name, is_deleted: section.is_deleted });
             await queryClient.invalidateQueries({ queryKey: ['section'] });
             return { ...section };
         },
@@ -67,6 +83,7 @@ function SectionPage() {
             await sectionAPI.deleteSection(id);
             await queryClient.invalidateQueries({ queryKey: ['section'] });
         },
+        rowClassName: (section: Section) => ({ 'row-deleted': section.is_deleted }),
     };
 
 

@@ -46,6 +46,7 @@ export interface CrudDataTableConfig<T extends BaseEntity> {
     wrapperClassName?: string;
     isLoading?: boolean;
     skeletonRows?: number;
+    rowClassName?: (item: T) => string | object | undefined;
 }
 
 interface CrudDataTableProps<T extends BaseEntity> {
@@ -75,6 +76,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         wrapperClassName,
         isLoading = false,
         skeletonRows = 5,
+        rowClassName,
     } = config;
 
     const lockedColumnSet = new Set(lockedColumnKeys);
@@ -223,8 +225,10 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
             if (onDeleteItem) {
                 await onDeleteItem(item.id);
             }
-            const remainingItems = items.filter((val) => val.id !== item.id);
-            setItems(remainingItems);
+            const updatedItems = items.map((val) =>
+                val.id === item.id ? { ...val, is_deleted: true } : val
+            );
+            setItems(updatedItems);
             toast.current?.show({
                 severity: 'success',
                 summary: 'Exitoso',
@@ -473,6 +477,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                     globalFilter={globalFilter}
                     header={header}
                     emptyMessage={`No hay ${entityNamePlural.toLowerCase()} registrados`}
+                    rowClassName={rowClassName ? (rowData: T) => rowClassName(rowData) : undefined}
                 >
                     {columns.map((col, index) => {
                         const columnKey = getColumnKey(col, index);

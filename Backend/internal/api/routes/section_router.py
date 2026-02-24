@@ -20,6 +20,11 @@ def create_section(section_data: SectionCreate,db: Session = Depends(get_db)):
 
 @router.get("/", response_model=List[SectionRead])
 def get_sections(db: Session = Depends(get_db)):
+    sections = db.query(Section).all()
+    return sections
+
+@router.get("/undeleted", response_model=List[SectionRead])
+def get_undeleted_sections(db: Session = Depends(get_db)):
     sections = db.query(Section).filter(Section.is_deleted == False).all()
     return sections
 
@@ -30,7 +35,7 @@ def update_section(section_id: int, section_data: SectionUpdate,db: Session = De
         raise HTTPException(status_code=404, detail="Sección no encontrada")
     db.execute(update(Section).filter_by(id=section_id).values(**section_data.model_dump()))
     db.commit()
-    return {"Sección actualida"}
+    return {"Sección actualizada"}
 
 @router.delete("/{section_id}")
 def delete_section(section_id: int ,db: Session = Depends(get_db)):
