@@ -64,7 +64,7 @@ def create_inventory_item_exit(inventory_item_movement_data: InventoryMovementCr
              "total_exits": InventoryItem.total_exits + inventory_item_movement_data.quantity}
         )
 
-        pattern = r"Persona a cargo:\s*([a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+)"
+        pattern = r"Persona a cargo:[ \t]*([^\r\n]+)"
         match = re.search(pattern, new_inventory_item_exit.observation)
         if match:
             person_name = match.group(1).strip()

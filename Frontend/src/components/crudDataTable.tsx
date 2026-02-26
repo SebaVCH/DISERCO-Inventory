@@ -494,8 +494,8 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
 
             <Dialog
                 visible={itemDialog}
-                style={{ width: '32rem' }}
-                breakpoints={{ '960px': '75vw', '641px': '90vw' }}
+                style={{ width: '48rem' }}
+                breakpoints={{ '1200px': '70vw', '960px': '80vw', '641px': '95vw' }}
                 header={`Detalles del ${entityName}`}
                 modal
                 className="app-dialog"

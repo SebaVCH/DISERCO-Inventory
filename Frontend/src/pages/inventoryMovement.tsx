@@ -2,6 +2,7 @@ import CrudDataTable, {type CrudDataTableConfig} from "../components/crudDataTab
 import {InputNumber} from "primereact/inputnumber";
 import {InputTextarea} from "primereact/inputtextarea";
 import {Dropdown, type DropdownChangeEvent} from "primereact/dropdown";
+import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import {classNames} from "primereact/utils";
 import type {InventoryMovement} from "../types/inventoryMovement.ts";
@@ -30,10 +31,10 @@ interface MovementRow {
     exitQuantity: number;
 }
 
-const createEmptyRow = (): MovementRow => ({
+const createEmptyRow = (observation = ""): MovementRow => ({
     key: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     inventory_item_id: 0,
-    observation: "",
+    observation,
     entryQuantity: 0,
     exitQuantity: 0,
 });
@@ -63,6 +64,20 @@ function InventoryMovementPage() {
      const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([]);
      const [movementRows, setMovementRows] = useState<MovementRow[]>([createEmptyRow()]);
      const [itemSearch, setItemSearch] = useState("");
+     const [documentType, setDocumentType] = useState<'ACTA_DE_ENTREGA' | 'SALIDA'>('SALIDA');
+     const [documentFolio, setDocumentFolio] = useState("");
+     const [documentDate, setDocumentDate] = useState(() => {
+         const now = new Date();
+         const day = String(now.getDate()).padStart(2, '0');
+         const month = String(now.getMonth() + 1).padStart(2, '0');
+         const year = now.getFullYear();
+         return `${day}.${month}.${year}`;
+     });
+
+    const documentTypeOptions = [
+        { label: 'Acta de entrega', value: 'ACTA_DE_ENTREGA' },
+        { label: 'Salida', value: 'SALIDA' }
+    ];
 
     const getItemLabel = (itemId: number) => {
         const item = inventoryItems.find((inv) => inv.id === itemId);
@@ -73,6 +88,70 @@ function InventoryMovementPage() {
     const getAvailableStock = (itemId: number) => {
         const item = inventoryItems.find((inv) => inv.id === itemId);
         return item?.current_stock ?? 0;
+    };
+
+    const toolObservationPrefix = "Persona a cargo:";
+
+    const isValidDocumentDate = (value: string) => /^\d{2}\.\d{2}\.\d{4}$/.test(value.trim());
+
+    const buildDocumentPrefix = () => {
+        if (!isValidDocumentDate(documentDate)) return "";
+        const formattedDate = documentDate.trim();
+        if (documentType === 'SALIDA') {
+            const trimmedFolio = documentFolio.trim();
+            return trimmedFolio
+                ? `SALIDA N°${trimmedFolio} - ${formattedDate}`
+                : `SALIDA - ${formattedDate}`;
+        }
+        return `ACTA DE ENTREGA - ${formattedDate}`;
+    };
+
+    const sanitizeDocumentDateInput = (raw: string) =>
+        raw.replace(/[^\d.]/g, '').slice(0, 10);
+
+    const documentPrefix = useMemo(() => buildDocumentPrefix(), [documentType, documentFolio, documentDate]);
+
+    const isToolItem = (itemId: number) => {
+        const item = inventoryItems.find((inv) => inv.id === itemId);
+        return item?.is_tool ?? false;
+    };
+
+    const stripToolObservationPrefix = (text: string) => {
+        const trimmed = text.trimStart();
+        if (trimmed.toLowerCase().startsWith(toolObservationPrefix.toLowerCase())) {
+            return trimmed.slice(toolObservationPrefix.length).trimStart();
+        }
+        return text;
+    };
+
+    const stripDocumentPrefix = (text: string) => {
+        const trimmed = text.trimStart();
+        const salidaMatch = /^SALIDA(?:\s+N°\S+)?\s+-\s+\d{2}\.\d{2}\.\d{4}\s*/i;
+        const actaMatch = /^ACTA DE ENTREGA\s+-\s+\d{2}\.\d{2}\.\d{4}\s*/i;
+        if (salidaMatch.test(trimmed)) {
+            return trimmed.replace(salidaMatch, '');
+        }
+        if (actaMatch.test(trimmed)) {
+            return trimmed.replace(actaMatch, '');
+        }
+        return text;
+    };
+
+    const applyObservationPrefixes = (text: string, isTool: boolean) => {
+        const withoutDoc = stripDocumentPrefix(text);
+        const withoutTool = stripToolObservationPrefix(withoutDoc);
+        const cleaned = withoutTool.trimStart();
+        const parts: string[] = [];
+        if (documentPrefix) {
+            parts.push(documentPrefix);
+        }
+        if (isTool) {
+            parts.push(toolObservationPrefix);
+        }
+        if (cleaned) {
+            parts.push(cleaned);
+        }
+        return parts.join(' ').trim();
     };
 
     const actionableRows = useMemo(
@@ -150,6 +229,15 @@ function InventoryMovementPage() {
         }
     }, [data]);
 
+    useEffect(() => {
+        setMovementRows((prev) =>
+            prev.map((row) => ({
+                ...row,
+                observation: applyObservationPrefixes(row.observation, isToolItem(row.inventory_item_id))
+            }))
+        );
+    }, [documentPrefix, inventoryItems]);
+
     const filteredInventoryItems = inventoryItems.filter((item) =>
         item.name.toLowerCase().includes(itemSearch.toLowerCase())
     );
@@ -157,7 +245,7 @@ function InventoryMovementPage() {
     const ensureTrailingEmptyRow = (rows: MovementRow[]) => {
         const last = rows[rows.length - 1];
         const hasData = Boolean(last.inventory_item_id || last.entryQuantity > 0 || last.exitQuantity > 0 || last.observation.trim());
-        return hasData ? [...rows, createEmptyRow()] : rows;
+        return hasData ? [...rows, createEmptyRow(documentPrefix)] : rows;
     };
 
     const updateRow = (rowKey: string, updater: (row: MovementRow) => MovementRow) => {
@@ -171,19 +259,29 @@ function InventoryMovementPage() {
         setMovementRows((prev) => {
             const remaining = prev.filter((row) => row.key !== rowKey);
             if (remaining.length === 0) {
-                return [createEmptyRow()];
+                return [createEmptyRow(documentPrefix)];
             }
             return ensureTrailingEmptyRow(remaining);
         });
     };
 
     const handleItemChange = (rowKey: string, value: number) => {
-        updateRow(rowKey, (row) => ({ ...row, inventory_item_id: value }));
+        updateRow(rowKey, (row) => {
+            const isTool = isToolItem(value);
+            return {
+                ...row,
+                inventory_item_id: value,
+                observation: applyObservationPrefixes(row.observation, isTool),
+            };
+        });
     };
 
     const handleObservationChange = (rowKey: string, e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const text = e.target.value;
-        updateRow(rowKey, (row) => ({ ...row, observation: text }));
+        updateRow(rowKey, (row) => ({
+            ...row,
+            observation: applyObservationPrefixes(text, isToolItem(row.inventory_item_id)),
+        }));
     };
 
     const handleQuantityChange = (rowKey: string, value: number | null | undefined, field: 'entryQuantity' | 'exitQuantity') => {
@@ -300,6 +398,48 @@ function InventoryMovementPage() {
             const showNoQuantityWarning = submitted && !hasActionableMovements();
             return (
                 <>
+                    <div className="dialog-section">
+                        <div className="dialog-section-header">
+                            <span className="dialog-section-title">Documento del movimiento</span>
+                        </div>
+                        <div className="dialog-doc-row">
+                            <div className="field dialog-field dialog-doc-field">
+                                <label htmlFor="movementDocType" className="font-bold">Tipo de documento</label>
+                                <Dropdown
+                                    id="movementDocType"
+                                    value={documentType}
+                                    options={documentTypeOptions}
+                                    onChange={(e: DropdownChangeEvent) => setDocumentType(e.value)}
+                                    placeholder="Selecciona un tipo"
+                                />
+                            </div>
+                            {documentType === 'SALIDA' && (
+                                <div className="field dialog-field dialog-doc-field">
+                                    <label htmlFor="movementDocFolio" className="font-bold">N° de folio</label>
+                                    <InputText
+                                        id="movementDocFolio"
+                                        value={documentFolio}
+                                        onChange={(e) => setDocumentFolio(e.target.value)}
+                                        placeholder="Ej: 299"
+                                    />
+                                </div>
+                            )}
+                            <div className="field dialog-field dialog-doc-field">
+                                <label htmlFor="movementDocDate" className="font-bold">Fecha</label>
+                                <InputText
+                                    id="movementDocDate"
+                                    value={documentDate}
+                                    onChange={(e) => setDocumentDate(sanitizeDocumentDateInput(e.target.value))}
+                                    placeholder="dd.mm.aaaa"
+                                    inputMode="numeric"
+                                    maxLength={10}
+                                />
+                            </div>
+                        </div>
+                        {documentPrefix && (
+                            <small className="text-600">Vista previa: {documentPrefix}</small>
+                        )}
+                    </div>
                     <div className="grid">
                         {movementRows.map((row, index) => (
                             <div key={row.key} className="col-12">
@@ -333,7 +473,9 @@ function InventoryMovementPage() {
                                         {rowsMissingItem(row) && <small className="p-error">Selecciona un artículo para este movimiento.</small>}
                                     </div>
                                     <div className="field dialog-field">
-                                        <label htmlFor={`entryQuantity_${row.key}`} className="font-bold">Cantidad de Entrada</label>
+                                        <label htmlFor={`entryQuantity_${row.key}`} className="font-bold">
+                                            Cantidad de <span style={{ color: '#16a34a' }}>Entrada</span>
+                                        </label>
                                         <InputNumber
                                             id={`entryQuantity_${row.key}`}
                                             value={row.entryQuantity}
@@ -344,7 +486,9 @@ function InventoryMovementPage() {
                                         />
                                     </div>
                                     <div className="field dialog-field">
-                                        <label htmlFor={`exitQuantity_${row.key}`} className="font-bold">Cantidad de Salida</label>
+                                        <label htmlFor={`exitQuantity_${row.key}`} className="font-bold">
+                                            Cantidad de <span style={{ color: '#dc2626' }}>Salida</span>
+                                        </label>
                                         {row.inventory_item_id !== 0 && (
                                             <small className="text-600 block mb-2">Stock disponible: {getAvailableStock(row.inventory_item_id)}</small>
                                         )}
