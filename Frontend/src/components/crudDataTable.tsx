@@ -93,6 +93,8 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<T[]>>(null);
     const columnMenuRef = useRef<Menu>(null);
+    const columnToggleButtonRef = useRef<HTMLButtonElement>(null);
+    const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
 
     const [visibleColumns, setVisibleColumns] = useState<{ [key: string]: boolean }>(() => {
         const storageKey = `columnVisibility_${title.replace(/\s+/g, '_')}`;
@@ -129,6 +131,35 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         });
         localStorage.setItem(storageKey, JSON.stringify(toSave));
     }, [visibleColumns, title, lockedColumnKeys]);
+
+    useEffect(() => {
+        if (!isColumnMenuOpen) {
+            return;
+        }
+
+        const handleDocumentMouseDown = (e: MouseEvent) => {
+            const target = e.target as Node | null;
+            if (!target) {
+                return;
+            }
+
+            const menuElement = (() => {
+                const menuRef = columnMenuRef.current as unknown as { getElement?: () => HTMLElement | null };
+                return menuRef?.getElement?.() ?? document.querySelector<HTMLElement>('.column-toggle-menu');
+            })();
+
+            if (menuElement?.contains(target) || columnToggleButtonRef.current?.contains(target)) {
+                return;
+            }
+
+            columnMenuRef.current?.hide(e);
+        };
+
+        document.addEventListener('mousedown', handleDocumentMouseDown, true);
+        return () => {
+            document.removeEventListener('mousedown', handleDocumentMouseDown, true);
+        };
+    }, [isColumnMenuOpen]);
 
     const openNew = () => {
         setItem(emptyItem);
@@ -288,6 +319,14 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
         }));
     };
 
+    const handleColumnToggleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.column-toggle-item')) {
+            columnMenuRef.current?.hide(e);
+        }
+        e.stopPropagation();
+    };
+
     const getColumnKey = (col: ColumnProps, index: number): string => {
         return col.field || col.header?.toString() || `column_${index}`;
     };
@@ -348,6 +387,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
             <div className="crud-datatable-header-actions flex gap-2 align-items-center">
                 {enableColumnToggle && (
                     <Button
+                        ref={columnToggleButtonRef}
                         icon="pi pi-table"
                         rounded
                         outlined
@@ -395,14 +435,14 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 ref={columnMenuRef}
                 popup
                 className="column-toggle-menu"
+                onShow={() => setIsColumnMenuOpen(true)}
+                onHide={() => setIsColumnMenuOpen(false)}
                 model={[
                     {
                         template: () => (
                             <div
                                 className="column-toggle-content p-3"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                }}
+                                onClick={handleColumnToggleContentClick}
                             >
                                 <div className="column-toggle-header mb-3">
                                     <span className="font-bold">Columnas Visibles</span>

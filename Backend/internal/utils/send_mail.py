@@ -19,7 +19,6 @@ subject = None
 content = None
 
 TEMPLATE_DIR = Path(__file__).resolve().parent
-BACKUP_TEMPLATE = TEMPLATE_DIR / "backup_template.html"
 CRITICAL_TEMPLATE = TEMPLATE_DIR / "critical_stock_template.html"
 
 def send_mail():
@@ -30,16 +29,6 @@ def send_mail():
         & (InventoryItem.current_stock <= InventoryItem.critical_stock_quantity + 30)
         & (InventoryItem.is_deleted == False)
     ).all()
-
-    subject = "Aviso de respaldo de base de datos"
-    with BACKUP_TEMPLATE.open("r", encoding="utf-8") as file:
-        template = file.read()
-        backup_date = datetime.now(ZoneInfo("America/Santiago")).strftime("%Y-%m-%d %H:%M:%S %Z")
-        content = (
-            template.replace("{BACKUP_DATE}", backup_date)
-            .replace("{DOWNLOAD_URL}", "http://localhost:8000/backup/download")
-        )
-        smtp_sending_structure(content, subject, sub_list)
 
     subject = "Aviso de stock critico"
     with CRITICAL_TEMPLATE.open("r", encoding="utf-8") as file:
