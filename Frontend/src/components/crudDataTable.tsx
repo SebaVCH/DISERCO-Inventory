@@ -5,6 +5,7 @@ import { Column } from 'primereact/column';
 import type { ColumnProps } from 'primereact/column';
 import { Toast } from 'primereact/toast';
 import { Button } from 'primereact/button';
+import type { Button as ButtonType } from 'primereact/button';
 import { Toolbar } from 'primereact/toolbar';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
@@ -93,7 +94,7 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<T[]>>(null);
     const columnMenuRef = useRef<Menu>(null);
-    const columnToggleButtonRef = useRef<HTMLButtonElement>(null);
+    const columnToggleButtonRef = useRef<ButtonType>(null);
     const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
 
     const [visibleColumns, setVisibleColumns] = useState<{ [key: string]: boolean }>(() => {
@@ -148,11 +149,16 @@ function CrudDataTable<T extends BaseEntity>({ config }: CrudDataTableProps<T>) 
                 return menuRef?.getElement?.() ?? document.querySelector<HTMLElement>('.column-toggle-menu');
             })();
 
-            if (menuElement?.contains(target) || columnToggleButtonRef.current?.contains(target)) {
+            const buttonElement = (() => {
+                const btnRef = columnToggleButtonRef.current as unknown as { getElement?: () => HTMLElement | null };
+                return btnRef?.getElement?.() ?? document.querySelector<HTMLElement>('.column-toggle-button');
+            })();
+
+            if (menuElement?.contains(target) || buttonElement?.contains(target)) {
                 return;
             }
 
-            columnMenuRef.current?.hide(e);
+            columnMenuRef.current?.hide(e as unknown as React.SyntheticEvent);
         };
 
         document.addEventListener('mousedown', handleDocumentMouseDown, true);
