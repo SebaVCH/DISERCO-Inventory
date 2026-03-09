@@ -31,10 +31,10 @@ interface MovementRow {
     exitQuantity: number;
 }
 
-const createEmptyRow = (observation = ""): MovementRow => ({
+const createEmptyRow = (): MovementRow => ({
     key: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     inventory_item_id: 0,
-    observation,
+    observation: "",
     entryQuantity: 0,
     exitQuantity: 0,
 });
@@ -64,7 +64,7 @@ function InventoryMovementPage() {
      const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([]);
      const [movementRows, setMovementRows] = useState<MovementRow[]>([createEmptyRow()]);
      const [itemSearch, setItemSearch] = useState("");
-     const [documentType, setDocumentType] = useState<'ACTA_DE_ENTREGA' | 'SALIDA'>('SALIDA');
+     const [documentType, setDocumentType] = useState<'ACTA_DE_ENTREGA' | 'SALIDA' | 'OTRO'>('SALIDA');
      const [documentFolio, setDocumentFolio] = useState("");
      const [documentDate, setDocumentDate] = useState(() => {
          const now = new Date();
@@ -76,7 +76,8 @@ function InventoryMovementPage() {
 
     const documentTypeOptions = [
         { label: 'Acta de entrega', value: 'ACTA_DE_ENTREGA' },
-        { label: 'Salida', value: 'SALIDA' }
+        { label: 'Salida', value: 'SALIDA' },
+        { label: 'Otro', value: 'OTRO' }
     ];
 
     const getItemLabel = (itemId: number) => {
@@ -103,6 +104,9 @@ function InventoryMovementPage() {
                 ? `SALIDA N°${trimmedFolio} - ${formattedDate}`
                 : `SALIDA - ${formattedDate}`;
         }
+        if (documentType === 'OTRO') {
+            return `OTRO - ${formattedDate}`;
+        }
         return `ACTA DE ENTREGA - ${formattedDate}`;
     };
 
@@ -128,30 +132,61 @@ function InventoryMovementPage() {
         const trimmed = text.trimStart();
         const salidaMatch = /^SALIDA(?:\s+N°\S+)?\s+-\s+\d{2}\.\d{2}\.\d{4}\s*/i;
         const actaMatch = /^ACTA DE ENTREGA\s+-\s+\d{2}\.\d{2}\.\d{4}\s*/i;
+        const otroMatch = /^OTRO\s+-\s+\d{2}\.\d{2}\.\d{4}\s*/i;
         if (salidaMatch.test(trimmed)) {
             return trimmed.replace(salidaMatch, '');
         }
         if (actaMatch.test(trimmed)) {
             return trimmed.replace(actaMatch, '');
         }
+        if (otroMatch.test(trimmed)) {
+            return trimmed.replace(otroMatch, '');
+        }
         return text;
     };
 
-    const applyObservationPrefixes = (text: string, isTool: boolean) => {
-        const withoutDoc = stripDocumentPrefix(text);
-        const withoutTool = stripToolObservationPrefix(withoutDoc);
-        const cleaned = withoutTool.trimStart();
+    const getRequiredObservationPrefix = (itemId: number) => {
         const parts: string[] = [];
         if (documentPrefix) {
             parts.push(documentPrefix);
         }
-        if (isTool) {
+        if (isToolItem(itemId)) {
             parts.push(toolObservationPrefix);
         }
-        if (cleaned) {
-            parts.push(cleaned);
-        }
         return parts.join(' ').trim();
+    };
+
+    const getObservationInputValue = (row: MovementRow) => {
+        const requiredPrefix = getRequiredObservationPrefix(row.inventory_item_id);
+        if (!requiredPrefix) {
+            return row.observation;
+        }
+        return `${requiredPrefix}${row.observation}`;
+    };
+
+    const getObservationBodyFromInput = (inputText: string, itemId: number) => {
+        const requiredPrefix = getRequiredObservationPrefix(itemId);
+        if (requiredPrefix && inputText.startsWith(requiredPrefix)) {
+            return inputText.slice(requiredPrefix.length);
+        }
+        return inputText;
+    };
+
+    const buildObservationForSave = (text: string, itemId: number) => {
+        const withoutDoc = stripDocumentPrefix(text);
+        const withoutTool = stripToolObservationPrefix(withoutDoc);
+        const body = withoutTool;
+        const requiredPrefix = getRequiredObservationPrefix(itemId);
+
+        if (!requiredPrefix) {
+            return body.trim();
+        }
+
+        if (!body) {
+            return requiredPrefix;
+        }
+
+        return `${requiredPrefix}${body}`;
     };
 
     const actionableRows = useMemo(
@@ -229,23 +264,14 @@ function InventoryMovementPage() {
         }
     }, [data]);
 
-    useEffect(() => {
-        setMovementRows((prev) =>
-            prev.map((row) => ({
-                ...row,
-                observation: applyObservationPrefixes(row.observation, isToolItem(row.inventory_item_id))
-            }))
-        );
-    }, [documentPrefix, inventoryItems]);
-
     const filteredInventoryItems = inventoryItems.filter((item) =>
         item.name.toLowerCase().includes(itemSearch.toLowerCase())
     );
 
     const ensureTrailingEmptyRow = (rows: MovementRow[]) => {
         const last = rows[rows.length - 1];
-        const hasData = Boolean(last.inventory_item_id || last.entryQuantity > 0 || last.exitQuantity > 0 || last.observation.trim());
-        return hasData ? [...rows, createEmptyRow(documentPrefix)] : rows;
+        const hasData = Boolean(last.inventory_item_id || last.entryQuantity > 0 || last.exitQuantity > 0);
+        return hasData ? [...rows, createEmptyRow()] : rows;
     };
 
     const updateRow = (rowKey: string, updater: (row: MovementRow) => MovementRow) => {
@@ -259,28 +285,24 @@ function InventoryMovementPage() {
         setMovementRows((prev) => {
             const remaining = prev.filter((row) => row.key !== rowKey);
             if (remaining.length === 0) {
-                return [createEmptyRow(documentPrefix)];
+                return [createEmptyRow()];
             }
             return ensureTrailingEmptyRow(remaining);
         });
     };
 
     const handleItemChange = (rowKey: string, value: number) => {
-        updateRow(rowKey, (row) => {
-            const isTool = isToolItem(value);
-            return {
-                ...row,
-                inventory_item_id: value,
-                observation: applyObservationPrefixes(row.observation, isTool),
-            };
-        });
+        updateRow(rowKey, (row) => ({
+            ...row,
+            inventory_item_id: value,
+        }));
     };
 
     const handleObservationChange = (rowKey: string, e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const text = e.target.value;
+        const inputText = e.target.value;
         updateRow(rowKey, (row) => ({
             ...row,
-            observation: applyObservationPrefixes(text, isToolItem(row.inventory_item_id)),
+            observation: getObservationBodyFromInput(inputText, row.inventory_item_id),
         }));
     };
 
@@ -328,7 +350,10 @@ function InventoryMovementPage() {
         const requests: Promise<any>[] = [];
 
         validRows.forEach((row) => {
-            const payload = { observation: row.observation } as { quantity: number; observation?: string };
+            const finalObservation = buildObservationForSave(row.observation, row.inventory_item_id);
+            const payload = {
+                observation: finalObservation,
+            } as { quantity: number; observation?: string };
             if (row.entryQuantity > 0) {
                 requests.push(
                     inventoryItemAPI.createItemEntry(
@@ -509,10 +534,13 @@ function InventoryMovementPage() {
                                         <label htmlFor={`observation_${row.key}`} className="font-bold">Observación</label>
                                         <InputTextarea
                                             id={`observation_${row.key}`}
-                                            value={row.observation}
+                                            value={getObservationInputValue(row)}
                                             onChange={(e) => handleObservationChange(row.key, e)}
                                             rows={2}
                                         />
+                                        <small className="text-600 block mt-1">
+                                            {`Se guardará como: ${buildObservationForSave(row.observation, row.inventory_item_id) || '(sin observación)'}`}
+                                        </small>
                                     </div>
                                 </div>
                             </div>
